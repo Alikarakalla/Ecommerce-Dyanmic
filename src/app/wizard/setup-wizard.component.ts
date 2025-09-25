@@ -13,12 +13,19 @@ import {
 } from '@angular/core';
 import {
   FormArray,
+  FormControl,
   FormGroup,
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { GeneratedSite, ProductDetails } from '../models/site.model';
+import { GeneratedSite, HeroTheme, NavbarTheme, ProductCardTheme, ProductDetails } from '../models/site.model';
+
+interface ThemeOption<T extends string> {
+  id: T;
+  label: string;
+  description: string;
+}
 
 interface ProductFormValue {
   name: string;
@@ -82,6 +89,28 @@ const DEFAULT_PRODUCTS: ProductDetails[] = [
   }
 ];
 
+const NAVBAR_THEME_OPTIONS: ThemeOption<NavbarTheme>[] = [
+  { id: 'classic', label: 'Classic', description: 'Layered glass effect with balanced layout.' },
+  { id: 'minimal', label: 'Minimal', description: 'Clean underline with centered brand.' },
+  { id: 'contrast', label: 'Contrast', description: 'Bold twilight bar with light typography.' },
+  { id: 'floating', label: 'Floating', description: 'Rounded capsule nav that hovers over content.' },
+  { id: 'pill', label: 'Pill', description: 'Accent-backed brand badge with pill links.' }
+];
+
+const HERO_THEME_OPTIONS: ThemeOption<HeroTheme>[] = [
+  { id: 'spotlight', label: 'Spotlight', description: 'Full-bleed hero with gradient overlay.' },
+  { id: 'split', label: 'Split', description: 'Two-column layout with framed imagery.' },
+  { id: 'overlay', label: 'Overlay', description: 'Soft background with centered call-to-action.' }
+];
+
+const PRODUCT_CARD_THEME_OPTIONS: ThemeOption<ProductCardTheme>[] = [
+  { id: 'elevated', label: 'Elevated', description: 'Shadowed cards with hover lift.' },
+  { id: 'bordered', label: 'Bordered', description: 'Clean outlines with subtle depth.' },
+  { id: 'minimal', label: 'Minimal', description: 'Flat cards with relaxed spacing.' }
+];
+
+type ThemeControl = 'navbarTheme' | 'heroTheme' | 'productCardTheme';
+
 @Component({
   selector: 'app-setup-wizard',
   standalone: true,
@@ -104,6 +133,10 @@ export class SetupWizardComponent implements OnChanges {
     { title: 'Featured Products', description: 'Showcase the items you want to spotlight.' }
   ] as const;
 
+  protected readonly navbarThemeOptions = NAVBAR_THEME_OPTIONS;
+  protected readonly heroThemeOptions = HERO_THEME_OPTIONS;
+  protected readonly productCardThemeOptions = PRODUCT_CARD_THEME_OPTIONS;
+
   protected readonly wizardForm = this.fb.group({
     brand: this.fb.group({
       storeName: this.fb.control('', [Validators.required, Validators.maxLength(60)]),
@@ -116,6 +149,9 @@ export class SetupWizardComponent implements OnChanges {
       heroCtaLink: this.fb.control('#featured-products', [Validators.required, Validators.maxLength(120)]),
       primaryColor: this.fb.control('#2563eb', [Validators.required]),
       accentColor: this.fb.control('#f97316', [Validators.required]),
+      navbarTheme: this.fb.control<NavbarTheme>('classic'),
+      heroTheme: this.fb.control<HeroTheme>('spotlight'),
+      productCardTheme: this.fb.control<ProductCardTheme>('elevated'),
       aboutTitle: this.fb.control('Our Story', [Validators.required, Validators.maxLength(60)]),
       aboutDescription: this.fb.control('From concept to doorstep, we curate everyday essentials designed to last. Crafted with sustainable materials and made for life on the move.', [
         Validators.required,
@@ -140,6 +176,18 @@ export class SetupWizardComponent implements OnChanges {
     if (changes['site']) {
       this.prefillWithSite(changes['site'].currentValue as GeneratedSite | null);
     }
+  }
+
+  protected selectTheme(control: ThemeControl, value: string): void {
+    this.getThemeControl(control).setValue(value);
+  }
+
+  protected isThemeSelected(control: ThemeControl, value: string): boolean {
+    return this.getThemeControl(control).value === value;
+  }
+
+  private getThemeControl(control: ThemeControl): FormControl<string> {
+    return this.wizardForm.controls.visuals.get(control) as FormControl<string>;
   }
 
   protected get productsArray(): FormArray<FormGroup> {
@@ -262,6 +310,11 @@ export class SetupWizardComponent implements OnChanges {
         instagramUrl: raw.contact.instagramUrl,
         facebookUrl: raw.contact.facebookUrl
       },
+      themes: {
+        navbar: raw.visuals.navbarTheme,
+        hero: raw.visuals.heroTheme,
+        productCard: raw.visuals.productCardTheme
+      },
       products
     };
 
@@ -318,6 +371,9 @@ export class SetupWizardComponent implements OnChanges {
         heroCtaLink: site.heroCtaLink,
         primaryColor: site.primaryColor,
         accentColor: site.accentColor,
+        navbarTheme: site.themes?.navbar ?? 'classic',
+        heroTheme: site.themes?.hero ?? 'spotlight',
+        productCardTheme: site.themes?.productCard ?? 'elevated',
         aboutTitle: site.about.title,
         aboutDescription: site.about.description
       },
@@ -391,5 +447,10 @@ export class SetupWizardComponent implements OnChanges {
     return candidate;
   }
 }
+
+
+
+
+
 
 

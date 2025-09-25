@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, HostListener, Input, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
-import { GeneratedSite, ProductDetails } from '../../models/site.model';
+import { GeneratedSite, NavbarTheme, ProductDetails } from '../../models/site.model';
 import { CartStateService } from '../../state/cart-state.service';
 import { SearchStateService } from '../../state/search-state.service';
 import { SiteStateService, CategoryGroup } from '../../state/site-state.service';
@@ -34,6 +34,13 @@ export class SiteNavbarComponent {
   protected readonly searchQuery = this.searchState.query;
   protected readonly searchOpen = this.searchState.open;
   protected readonly searchResults = this.searchState.results;
+  protected get navbarTheme(): NavbarTheme {
+    return this.site.themes?.navbar ?? 'classic';
+  }
+
+  protected get navbarThemeClass(): string {
+    return `site-nav--${this.navbarTheme}`;
+  }
   protected readonly activeCategory = this.siteState.activeCategory;
 
   protected get profileInitial(): string {
@@ -136,4 +143,8 @@ export class SiteNavbarComponent {
     return sub;
   }
 }
+
+
+
+
 

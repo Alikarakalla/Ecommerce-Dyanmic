@@ -1,7 +1,11 @@
-﻿export interface ProductVariantSelection {
+export interface ProductVariantSelection {
   size?: string;
   color?: string;
 }
+
+export type NavbarTheme = 'classic' | 'minimal' | 'contrast' | 'floating' | 'pill';
+export type HeroTheme = 'spotlight' | 'split' | 'overlay';
+export type ProductCardTheme = 'elevated' | 'bordered' | 'minimal';
 
 export interface ProductDetails {
   name: string;
@@ -38,4 +42,10 @@ export interface GeneratedSite {
     facebookUrl: string;
   };
   products: ProductDetails[];
+  themes: {
+    navbar: NavbarTheme;
+    hero: HeroTheme;
+    productCard: ProductCardTheme;
+  };
 }
+

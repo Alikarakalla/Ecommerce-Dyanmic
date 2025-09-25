@@ -1,7 +1,7 @@
-﻿<div class="wizard-backdrop">
+<div class="wizard-backdrop">
   <div class="wizard" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
     <button type="button" class="wizard__close" aria-label="Close wizard" (click)="cancelWizard()">
-      ✕
+      ?
     </button>
     <header class="wizard__header">
       <div>
@@ -65,7 +65,7 @@
                 <span class="field__label">Hero image URL</span>
                 <input type="url" formControlName="heroImageUrl" placeholder="https://..." />
                 @if (visualControls.heroImageUrl.touched && visualControls.heroImageUrl.invalid) {
-                  <span class="field__error">Hero imagery sets the tone—add a photo or illustration.</span>
+                  <span class="field__error">Hero imagery sets the tone-add a photo or illustration.</span>
                 }
               </label>
 
@@ -104,9 +104,144 @@
                 <span class="field__label">About section description</span>
                 <textarea rows="4" formControlName="aboutDescription" placeholder="Tell shoppers what makes your brand stand out."></textarea>
                 @if (visualControls.aboutDescription.touched && visualControls.aboutDescription.invalid) {
-                  <span class="field__error">Share at least a few sentences—aim for 30+ characters.</span>
+                  <span class="field__error">Share at least a few sentences-aim for 30+ characters.</span>
                 }
               </label>
+            </div>
+
+            <div class="wizard__themes">
+              <div
+                class="theme-group"
+                role="radiogroup"
+                aria-labelledby="navbar-theme-label"
+              >
+                <header class="theme-group__header">
+                  <h3 id="navbar-theme-label">Navigation style</h3>
+                  <p>Pick the header layout that best suits your brand.</p>
+                </header>
+                <div class="theme-group__options">
+                  @for (option of navbarThemeOptions; track option.id) {
+                    <button
+                      type="button"
+                      class="theme-card"
+                      role="radio"
+                      [class.theme-card--selected]="isThemeSelected('navbarTheme', option.id)"
+                      [attr.aria-checked]="isThemeSelected('navbarTheme', option.id)"
+                      (click)="selectTheme('navbarTheme', option.id)"
+                      (keydown.enter)="selectTheme('navbarTheme', option.id)"
+                      (keydown.space)="selectTheme('navbarTheme', option.id)"
+                      [attr.tabindex]="isThemeSelected('navbarTheme', option.id) ? 0 : -1"
+                    >
+                      <div
+                        class="theme-card__preview theme-card__preview--navbar"
+                        [ngClass]="'theme-card__preview--' + option.id"
+                        aria-hidden="true"
+                      >
+                        <div class="nav-thumb" [ngClass]="'nav-thumb--' + option.id">
+                          <div class="nav-thumb__brand">LOGO</div>
+                          <div class="nav-thumb__links">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                          </div>
+                          <div class="nav-thumb__cta">Shop</div>
+                        </div>
+                      </div>
+                      <span class="theme-card__body">
+                        <span class="theme-card__title">{{ option.label }}</span>
+                        <span class="theme-card__description">{{ option.description }}</span>
+                      </span>
+                      <span class="theme-card__check" aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path d="M3 10.5l4 4L17 5" />
+                        </svg>
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div
+                class="theme-group"
+                role="radiogroup"
+                aria-labelledby="hero-theme-label"
+              >
+                <header class="theme-group__header">
+                  <h3 id="hero-theme-label">Hero spotlight</h3>
+                  <p>Choose how the hero image and messaging should present.</p>
+                </header>
+                <div class="theme-group__options">
+                  @for (option of heroThemeOptions; track option.id) {
+                    <button
+                      type="button"
+                      class="theme-card"
+                      role="radio"
+                      [class.theme-card--selected]="isThemeSelected('heroTheme', option.id)"
+                      [attr.aria-checked]="isThemeSelected('heroTheme', option.id)"
+                      (click)="selectTheme('heroTheme', option.id)"
+                      (keydown.enter)="selectTheme('heroTheme', option.id)"
+                      (keydown.space)="selectTheme('heroTheme', option.id)"
+                      [attr.tabindex]="isThemeSelected('heroTheme', option.id) ? 0 : -1"
+                    >
+                      <span
+                        class="theme-card__preview"
+                        [ngClass]="['theme-card__preview--hero', 'theme-card__preview--' + option.id]"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="theme-card__body">
+                        <span class="theme-card__title">{{ option.label }}</span>
+                        <span class="theme-card__description">{{ option.description }}</span>
+                      </span>
+                      <span class="theme-card__check" aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path d="M3 10.5l4 4L17 5" />
+                        </svg>
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div
+                class="theme-group"
+                role="radiogroup"
+                aria-labelledby="product-theme-label"
+              >
+                <header class="theme-group__header">
+                  <h3 id="product-theme-label">Product cards</h3>
+                  <p>Control the visual treatment of items in the catalog grid.</p>
+                </header>
+                <div class="theme-group__options">
+                  @for (option of productCardThemeOptions; track option.id) {
+                    <button
+                      type="button"
+                      class="theme-card"
+                      role="radio"
+                      [class.theme-card--selected]="isThemeSelected('productCardTheme', option.id)"
+                      [attr.aria-checked]="isThemeSelected('productCardTheme', option.id)"
+                      (click)="selectTheme('productCardTheme', option.id)"
+                      (keydown.enter)="selectTheme('productCardTheme', option.id)"
+                      (keydown.space)="selectTheme('productCardTheme', option.id)"
+                      [attr.tabindex]="isThemeSelected('productCardTheme', option.id) ? 0 : -1"
+                    >
+                      <span
+                        class="theme-card__preview"
+                        [ngClass]="['theme-card__preview--product', 'theme-card__preview--' + option.id]"
+                        aria-hidden="true"
+                      ></span>
+                      <span class="theme-card__body">
+                        <span class="theme-card__title">{{ option.label }}</span>
+                        <span class="theme-card__description">{{ option.description }}</span>
+                      </span>
+                      <span class="theme-card__check" aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path d="M3 10.5l4 4L17 5" />
+                        </svg>
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
             </div>
           </section>
         }
@@ -208,4 +343,13 @@
     </form>
   </div>
 </div>
+
+
+
+
+
+
+
+
+
 

@@ -185,7 +185,16 @@ export class SiteStateService {
         return null;
       }
 
-      return JSON.parse(raw) as GeneratedSite;
+      const parsed = JSON.parse(raw) as GeneratedSite;
+      if (!parsed.themes) {
+        parsed.themes = {
+          navbar: 'classic',
+          hero: 'spotlight',
+          productCard: 'elevated'
+        };
+      }
+
+      return parsed;
     } catch (error) {
       console.error('Failed to parse stored site', error);
       return null;
@@ -205,3 +214,5 @@ export class SiteStateService {
     localStorage.setItem(SITE_STORAGE_KEY, JSON.stringify(site));
   }
 }
+
+

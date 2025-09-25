@@ -1,4 +1,4 @@
-﻿import { provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { routes } from './app.routes';
@@ -52,6 +52,11 @@ describe('App', () => {
         instagramUrl: 'https://instagram.com/novasupply',
         facebookUrl: ''
       },
+      themes: {
+        navbar: 'classic',
+        hero: 'spotlight',
+        productCard: 'elevated'
+      },
       products: [
         {
           name: 'Signature Hoodie',
@@ -71,3 +76,5 @@ describe('App', () => {
     expect(siteState.wizardOpen()).toBeFalse();
   });
 });
+
+

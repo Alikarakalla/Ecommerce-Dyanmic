@@ -1,4 +1,4 @@
-<nav class="site-nav" [style.--accent-color]="site.accentColor">
+<nav class="site-nav" [ngClass]="navbarThemeClass" [style.--accent-color]="site.accentColor">
   <a class="site-nav__brand" routerLink="/">
     <img class="site-nav__logo" [src]="site.logoUrl" alt="{{ site.storeName }} logo" />
     <div>
@@ -80,7 +80,7 @@
 </nav>
 
 @if (categories().length) {
-  <div class="site-nav__categories">
+  <div class="site-nav__categories" [ngClass]="navbarThemeClass">
     @for (group of categories(); track trackByCategory($index, group)) {
       <div class="site-nav__category" [class.site-nav__category--active]="activeCategory()?.category === group.category">
         <button type="button" (click)="selectCategory(group.category)">{{ group.category }}</button>
@@ -98,7 +98,7 @@
 }
 
 @if (searchOpen() && searchResults().length) {
-  <div class="site-nav__search-panel">
+  <div class="site-nav__search-panel" [ngClass]="navbarThemeClass">
     @for (product of searchResults(); track product.slug) {
       <article class="search-card">
         <img [src]="product.imageUrl" alt="{{ product.name }}" />
@@ -115,8 +115,11 @@
     }
   </div>
 } @else if (searchOpen() && !searchResults().length && searchQuery()) {
-  <div class="site-nav__search-panel site-nav__search-panel--empty">
+  <div class="site-nav__search-panel site-nav__search-panel--empty" [ngClass]="navbarThemeClass">
     <p>No matches yet. Try another keyword.</p>
   </div>
 }
+
+
+
 

@@ -221,6 +221,89 @@
   font-weight: 600;
 }
 
+.products-grid--elevated {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+}
+
+.products-grid--bordered {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.products-grid--bordered .product-card {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: none;
+}
+
+.products-grid--bordered .product-card:hover {
+  box-shadow: 0 20px 32px rgba(15, 23, 42, 0.12);
+}
+
+.products-grid--bordered .product-card__favorite {
+  background: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.products-grid--bordered .product-card__action {
+  background: #2563eb;
+  box-shadow: none;
+}
+
+.products-grid--bordered .product-card__action:hover {
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+}
+
+.products-grid--minimal {
+  background: #f5f7fb;
+}
+
+.products-grid--minimal .products-grid__head h2 {
+  font-weight: 600;
+}
+
+.products-grid--minimal .product-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: transparent;
+  box-shadow: none;
+}
+
+.products-grid--minimal .product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.1);
+}
+
+.products-grid--minimal .product-card__favorite {
+  background: rgba(148, 163, 184, 0.18);
+  color: #1f2937;
+  box-shadow: none;
+}
+
+.products-grid--minimal .product-card__body p {
+  color: #475569;
+}
+
+.products-grid--minimal .product-card__price {
+  color: #1f2937;
+}
+
+.products-grid--minimal .product-card__action {
+  background: rgba(37, 99, 235, 0.16);
+  color: #1d4ed8;
+  box-shadow: none;
+}
+
+.products-grid--minimal .product-card__action:hover {
+  background: rgba(37, 99, 235, 0.24);
+}
+
+.products-grid--minimal .product-card__details {
+  color: #1f2937;
+}
+
+.products-grid--minimal .product-card__favorite:hover {
+  background: rgba(37, 99, 235, 0.2);
+}
 @media (max-width: 720px) {
   .products-grid__head {
     flex-direction: column;
@@ -232,3 +315,5 @@
     align-items: stretch;
   }
 }
+
+

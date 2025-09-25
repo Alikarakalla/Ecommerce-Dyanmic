@@ -1,4 +1,4 @@
-<section class="products-grid" id="featured-products">
+<section class="products-grid" [ngClass]="gridThemeClass()" id="featured-products">
   <div class="products-grid__head">
     <div>
       <h2>{{ title() }}</h2>
@@ -65,4 +65,5 @@
     </div>
   }
 </section>
+
 

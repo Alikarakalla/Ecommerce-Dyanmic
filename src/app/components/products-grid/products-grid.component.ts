@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ProductDetails } from '../../models/site.model';
+import { ProductCardTheme, ProductDetails } from '../../models/site.model';
 import { CartStateService } from '../../state/cart-state.service';
 import { SiteStateService } from '../../state/site-state.service';
 
@@ -20,6 +20,12 @@ export class ProductsGridComponent {
   @Input({ required: true }) products: ProductDetails[] = [];
 
   protected readonly activeCategory = this.siteState.activeCategory;
+
+  protected readonly productCardTheme = computed<ProductCardTheme>(() =>
+    this.siteState.site()?.themes?.productCard ?? 'elevated'
+  );
+  protected readonly gridThemeClass = computed(() => `products-grid--${this.productCardTheme()}`);
+
   protected readonly title = computed(() => {
     const active = this.activeCategory();
     if (!active) {
@@ -58,3 +64,5 @@ export class ProductsGridComponent {
     this.siteState.clearCategoryFilter();
   }
 }
+
+
