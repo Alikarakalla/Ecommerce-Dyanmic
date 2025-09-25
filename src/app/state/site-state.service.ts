@@ -2,6 +2,8 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { GeneratedSite, ProductDetails } from '../models/site.model';
 
+const SITE_STORAGE_KEY = 'ecommerce-dynamic-site';
+
 export interface CategoryGroup {
   category: string;
   subCategories: string[];
@@ -11,7 +13,7 @@ export interface CategoryGroup {
 export class SiteStateService {
   private readonly auth = inject(AuthService);
 
-  private readonly siteSignal = signal<GeneratedSite | null>(null);
+  private readonly siteSignal = signal<GeneratedSite | null>(this.loadSite());
   private readonly wizardVisibleSignal = signal(false);
   private readonly accountModalOpenSignal = signal(false);
   private readonly profileMenuOpenSignal = signal(false);
@@ -91,6 +93,10 @@ export class SiteStateService {
         this.profileMenuOpenSignal.set(false);
       }
     });
+
+    effect(() => {
+      this.persistSite(this.siteSignal());
+    });
   }
 
   setSite(site: GeneratedSite): void {
@@ -166,5 +172,36 @@ export class SiteStateService {
     }
 
     return site.products.find((product) => product.slug === slug) ?? null;
+  }
+
+  private loadSite(): GeneratedSite | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    try {
+      const raw = localStorage.getItem(SITE_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      return JSON.parse(raw) as GeneratedSite;
+    } catch (error) {
+      console.error('Failed to parse stored site', error);
+      return null;
+    }
+  }
+
+  private persistSite(site: GeneratedSite | null): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    if (!site) {
+      localStorage.removeItem(SITE_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(SITE_STORAGE_KEY, JSON.stringify(site));
   }
 }

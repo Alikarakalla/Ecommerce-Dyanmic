@@ -2,43 +2,32 @@
   <div class="admin-dashboard">
     <header class="admin-dashboard__hero">
       <div class="admin-dashboard__intro">
-        <h1>Store Control Center</h1>
-        <p>
-          Shape every part of your storefront from a single, focused workspace. Manage branding,
-          inventory, and contact touchpoints with live feedback.
-        </p>
+        <h1>Store performance</h1>
+        <p>Track what is live in your catalog and monitor customer activity without leaving the dashboard.</p>
         <div class="admin-dashboard__actions">
-          <button type="button" class="ghost" (click)="startWizard()">Launch setup wizard</button>
-          <button type="button" class="ghost" (click)="navigateToStore()">View live site</button>
+          <button type="button" class="button button--ghost" (click)="navigateToStore()">View store</button>
         </div>
       </div>
       <section class="admin-dashboard__metrics">
         <article class="metric">
           <span class="metric__label">Products</span>
           <span class="metric__value">{{ totalProducts() }}</span>
-          <small class="metric__hint">Currently visible on the storefront</small>
+          <small class="metric__hint">Currently available in the storefront</small>
         </article>
         <article class="metric">
-          <span class="metric__label">Categories</span>
-          <span class="metric__value">{{ totalCategories() }}</span>
-          <small class="metric__hint">Grouped by primary product category</small>
+          <span class="metric__label">Orders</span>
+          <span class="metric__value">{{ totalOrders() }}</span>
+          <small class="metric__hint">All time customer purchases</small>
         </article>
         <article class="metric">
-          <span class="metric__label">Status</span>
-          <span class="metric__value metric__value--status">
-            @if (hasUnsavedChanges()) {
-              Draft
-            } @else {
-              Published
-            }
-          </span>
-          <small class="metric__hint">
-            @if (lastSavedAt()) {
-              Last saved {{ lastSavedAt() | date: 'shortTime' }}
-            } @else {
-              Save to push live updates
-            }
-          </small>
+          <span class="metric__label">Customers</span>
+          <span class="metric__value">{{ totalUsers() }}</span>
+          <small class="metric__hint">Registered storefront accounts</small>
+        </article>
+        <article class="metric">
+          <span class="metric__label">Revenue</span>
+          <span class="metric__value">{{ totalRevenue() | currency }}</span>
+          <small class="metric__hint">Sum of recorded orders</small>
         </article>
       </section>
     </header>
@@ -46,220 +35,234 @@
     <main class="admin-dashboard__content">
       @if (!hasSite()) {
         <div class="admin-dashboard__empty">
-          <h2>No storefront configured yet</h2>
-          <p>
-            You can start fresh by completing the form below or launch the guided wizard to generate
-            a polished store in minutes.
-          </p>
+          <h2>No products yet</h2>
+          <p>Start by creating products from the storefront to populate this dashboard.</p>
         </div>
-      }
-
-      <form class="dashboard-form" [formGroup]="dashboardForm" (ngSubmit)="saveChanges()">
-        <section class="form-section" formGroupName="brand">
-          <div class="section-header">
-            <h2>Brand foundation</h2>
-            <p>Control how your shop introduces itself to visitors.</p>
-          </div>
-          <div class="field-grid">
-            <label class="field">
-              <span>Store name</span>
-              <input type="text" formControlName="storeName" placeholder="Acme Collective" />
-            </label>
-            <label class="field">
-              <span>Tagline</span>
-              <input type="text" formControlName="tagline" placeholder="Everyday staples, elevated" />
-            </label>
-            <label class="field field--full">
-              <span>Logo URL</span>
-              <input type="url" formControlName="logoUrl" placeholder="https://cdn.yoursite.com/logo.svg" />
-            </label>
-          </div>
-        </section>
-
-        <section class="form-section" formGroupName="hero">
-          <div class="section-header">
-            <h2>Hero experience</h2>
-            <p>Refresh imagery, calls-to-action, and brand colors in one place.</p>
-          </div>
-          <div class="field-grid">
-            <label class="field field--full">
-              <span>Hero image URL</span>
-              <input type="url" formControlName="heroImageUrl" placeholder="https://images.unsplash.com/..." />
-            </label>
-            <label class="field">
-              <span>Primary button label</span>
-              <input type="text" formControlName="heroCtaLabel" placeholder="Shop the collection" />
-            </label>
-            <label class="field">
-              <span>Primary button link</span>
-              <input type="text" formControlName="heroCtaLink" placeholder="#featured-products" />
-            </label>
-            <label class="field">
-              <span>Primary color</span>
-              <input type="color" formControlName="primaryColor" />
-            </label>
-            <label class="field">
-              <span>Accent color</span>
-              <input type="color" formControlName="accentColor" />
-            </label>
-          </div>
-        </section>
-
-        <section class="form-section" formGroupName="about">
-          <div class="section-header">
-            <h2>About spotlight</h2>
-            <p>Tell the story that anchors your brand promise.</p>
-          </div>
-          <div class="field-grid">
-            <label class="field">
-              <span>Headline</span>
-              <input type="text" formControlName="title" placeholder="Our Story" />
-            </label>
-            <label class="field field--full">
-              <span>Narrative</span>
-              <textarea formControlName="description" rows="4" placeholder="Share what makes your products special"></textarea>
-            </label>
-          </div>
-        </section>
-
-        <section class="form-section" formGroupName="contact">
-          <div class="section-header">
-            <h2>Contact & social</h2>
-            <p>Keep customer communication touchpoints accurate and current.</p>
-          </div>
-          <div class="field-grid">
-            <label class="field">
-              <span>Support email</span>
-              <input type="email" formControlName="contactEmail" placeholder="hello@yoursite.com" />
-            </label>
-            <label class="field">
-              <span>Phone</span>
-              <input type="text" formControlName="contactPhone" placeholder="+1 (555) 000-1234" />
-            </label>
-            <label class="field field--full">
-              <span>Address</span>
-              <input type="text" formControlName="contactAddress" placeholder="123 Market Street, San Francisco" />
-            </label>
-            <label class="field">
-              <span>Instagram</span>
-              <input type="url" formControlName="instagramUrl" placeholder="https://instagram.com/yourbrand" />
-            </label>
-            <label class="field">
-              <span>Facebook</span>
-              <input type="url" formControlName="facebookUrl" placeholder="https://facebook.com/yourbrand" />
-            </label>
-          </div>
-        </section>
-
-        <section class="form-section">
-          <div class="section-header">
+      } @else {
+        <form class="dashboard-section dashboard-section--form" [formGroup]="productManagerForm" (ngSubmit)="saveProductChanges()">
+          <header class="dashboard-section__header">
             <div>
-              <h2>Product catalog</h2>
-              <p>Curate the merchandise that powers your storefront experience.</p>
+              <h2>Product management</h2>
+              <p>Create, update, or remove items from the storefront catalog.</p>
             </div>
-            <button type="button" class="ghost" (click)="addProduct()">Add product</button>
-          </div>
+            <div class="product-form__toolbar">
+              <span class="dashboard-section__meta">{{ totalProducts() }} live</span>
+              <button type="button" class="button button--secondary" (click)="addProduct()">Add product</button>
+            </div>
+          </header>
 
-          <div formArrayName="products" class="products-grid">
-            @for (product of productsArray.controls; track trackByIndex($index); let i = $index) {
-              <article class="product-card" [formGroupName]="i">
-                <header class="product-card__header">
-                  <div>
-                    <h3>Product {{ i + 1 }}</h3>
-                    <p>Update details, imagery, and merchandising highlights.</p>
-                  </div>
-                  <button
-                    type="button"
-                    class="ghost ghost--danger"
-                    (click)="removeProduct(i)"
-                    [disabled]="productsArray.length <= 1"
-                  >
-                    Remove
-                  </button>
-                </header>
+          <div class="product-manager" formArrayName="products">
+            <div class="product-manager__grid">
+              <aside class="product-library" [class.product-library--empty]="!productsArray.length">
+                @if (productsArray.length) {
+                  <ul class="product-library__list">
+                    @for (productCtrl of productsArray.controls; track trackProductControl($index)) {
+                      <li class="product-library__item">
+                        <button
+                          type="button"
+                          class="product-tile"
+                          [class.product-tile--active]="isSelected($index)"
+                          (click)="selectProduct($index)"
+                        >
+                          <figure class="product-tile__media">
+                            <img
+                              [src]="previewImage(productCtrl)"
+                              [alt]="productCtrl.controls.name.value || ('Product ' + ($index + 1))"
+                            />
+                          </figure>
+                          <div class="product-tile__body">
+                            <span class="product-tile__title">
+                              {{ productCtrl.controls.name.value || ('Product ' + ($index + 1)) }}
+                            </span>
+                            <span class="product-tile__meta">
+                              {{ productCtrl.controls.highlight.value || productCtrl.controls.category.value || 'No category' }}
+                            </span>
+                          </div>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="product-library__empty">No products in the list yet. Use ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œAdd productÃƒÂ¢Ã¢â€šÂ¬Ã‚Â to create one.</p>
+                }
+              </aside>
 
-                <div class="product-card__body">
-                  <div class="field-grid">
-                    <label class="field">
+              <section class="product-editor" *ngIf="selectedProduct() as selected; else productSelectionPrompt">
+                <ng-container [formGroupName]="selectedProductIndex()!">
+                  <header class="product-editor__header">
+                    <div>
+                      <h3>{{ selected.controls.name.value || 'Untitled product' }}</h3>
+                      <span class="product-editor__hint">
+                        {{ selected.controls.slug.value || 'Slug generated on save' }}
+                      </span>
+                    </div>
+                    <div class="product-editor__actions">
+                      <button type="button" class="button button--danger" (click)="removeProduct(selectedProductIndex()!)">
+                        Delete
+                      </button>
+                    </div>
+                  </header>\n                  <div class="product-editor__grid">
+                    <label class="product-field">
                       <span>Name</span>
                       <input type="text" formControlName="name" placeholder="Everyday Tote" />
+                      @if (selected.controls.name.invalid && selected.controls.name.touched) {
+                        <small class="product-field__error">Name is required.</small>
+                      }
                     </label>
-                    <label class="field">
-                      <span>Highlight badge</span>
+
+                    <label class="product-field">
+                      <span>Highlight</span>
                       <input type="text" formControlName="highlight" placeholder="Limited Release" />
                     </label>
-                    <label class="field">
+
+                    <label class="product-field">
                       <span>Price</span>
-                      <input type="number" formControlName="price" min="0" step="0.01" />
+                      <input type="number" inputmode="decimal" min="0" step="0.01" formControlName="price" />
+                      @if (selected.controls.price.invalid && selected.controls.price.touched) {
+                        <small class="product-field__error">Enter a price of 0 or more.</small>
+                      }
                     </label>
-                    <label class="field">
+
+                    <label class="product-field">
                       <span>Slug</span>
                       <input type="text" formControlName="slug" placeholder="everyday-tote" />
                     </label>
-                    <label class="field field--full">
-                      <span>Description</span>
-                      <textarea formControlName="description" rows="3" placeholder="Describe the product features"></textarea>
-                    </label>
-                    <label class="field field--full">
-                      <span>Main image URL</span>
-                      <input type="url" formControlName="imageUrl" placeholder="https://images.unsplash.com/..." />
-                    </label>
-                    <label class="field field--full">
-                      <span>Gallery images</span>
-                      <textarea
-                        formControlName="gallery"
-                        rows="3"
-                        placeholder="Add one URL per line"
-                      ></textarea>
-                    </label>
-                    <label class="field">
-                      <span>Available sizes</span>
-                      <textarea formControlName="sizes" rows="2" placeholder="S\nM\nL"></textarea>
-                    </label>
-                    <label class="field">
-                      <span>Available colors</span>
-                      <textarea formControlName="colors" rows="2" placeholder="Charcoal\nSand"></textarea>
-                    </label>
-                    <label class="field">
+
+                    <label class="product-field">
                       <span>Category</span>
                       <input type="text" formControlName="category" placeholder="Apparel" />
                     </label>
-                    <label class="field">
+
+                    <label class="product-field">
                       <span>Sub category</span>
                       <input type="text" formControlName="subCategory" placeholder="Outerwear" />
                     </label>
+
+                    <label class="product-field product-field--full">
+                      <span>Description</span>
+                      <textarea formControlName="description" rows="3" placeholder="Describe the product features"></textarea>
+                      @if (selected.controls.description.invalid && selected.controls.description.touched) {
+                        <small class="product-field__error">Description must be between 30 and 250 characters.</small>
+                      }
+                    </label>
+
+                    <label class="product-field product-field--full">
+                      <span>Main image URL</span>
+                      <input type="url" formControlName="imageUrl" placeholder="https://images.unsplash.com/..." />
+                      @if (selected.controls.imageUrl.invalid && selected.controls.imageUrl.touched) {
+                        <small class="product-field__error">Image URL is required.</small>
+                      }
+                    </label>
+
+                    <label class="product-field product-field--full">
+                      <span>Gallery images</span>
+                      <textarea formControlName="gallery" rows="3" placeholder="Add one URL per line"></textarea>
+                    </label>
+
+                    <label class="product-field product-field--full">
+                      <span>Available sizes</span>
+                      <textarea formControlName="sizes" rows="2" placeholder="S&#10;M&#10;L"></textarea>
+                    </label>
+
+                    <label class="product-field product-field--full">
+                      <span>Available colors</span>
+                      <textarea formControlName="colors" rows="2" placeholder="Charcoal&#10;Sand"></textarea>
+                    </label>
                   </div>
-                </div>
-              </article>
-            }
+                </ng-container>
+              </section>
+            </div>
           </div>
+
+          <div class="product-form__footer">
+            <div class="product-form__status">
+              @if (hasUnsavedProductChanges()) {
+                <span class="status-pill status-pill--warning">Unsaved changes</span>
+              }
+              @if (productSaveState() === 'saved') {
+                <span class="status-pill status-pill--success">Products updated</span>
+              }
+            </div>
+            <button type="submit" class="button button--primary" [disabled]="productManagerForm.invalid || !hasUnsavedProductChanges()">
+              Save products
+            </button>
+          </div>
+        </form>
+
+        <section class="dashboard-section">
+          <header class="dashboard-section__header">
+            <div>
+              <h2>Recent orders</h2>
+              <p>Latest purchase activity</p>
+            </div>
+            <span class="dashboard-section__meta">{{ totalOrders() }} total</span>
+          </header>
+          @if (recentOrders().length) {
+            <ul class="dashboard-list">
+              @for (order of recentOrders(); track trackOrder($index, order)) {
+                <li class="dashboard-card">
+                  <div class="dashboard-card__primary">
+                    <h3>Order #{{ order.id.slice(-6).toUpperCase() }}</h3>
+                    <span class="dashboard-card__muted">{{ order.placedAt | date: 'medium' }}</span>
+                  </div>
+                  <div class="dashboard-card__secondary">
+                    <span class="dashboard-card__muted">{{ order.customerName }}</span>
+                    <span class="dashboard-card__value">{{ order.total | currency }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="dashboard-empty">No customer orders have been recorded yet.</p>
+          }
         </section>
 
-        <footer class="form-footer">
-          <div class="form-footer__status">
-            @if (hasUnsavedChanges()) {
-              <span class="status-pill status-pill--warning">Unsaved changes</span>
-            }
-            @if (saveFeedback() === 'saved') {
-              <span class="status-pill status-pill--success">Changes published</span>
-            }
-          </div>
-          <button type="submit" class="primary" [disabled]="dashboardForm.invalid || !hasUnsavedChanges()">
-            Publish updates
-          </button>
-        </footer>
-      </form>
+        <section class="dashboard-section">
+          <header class="dashboard-section__header">
+            <div>
+              <h2>Recent customers</h2>
+              <p>Latest registered accounts</p>
+            </div>
+            <span class="dashboard-section__meta">{{ totalUsers() }} total</span>
+          </header>
+          @if (latestUsers().length) {
+            <ul class="dashboard-list">
+              @for (user of latestUsers(); track trackUser($index, user)) {
+                <li class="dashboard-card">
+                  <div class="dashboard-card__primary">
+                    <h3>{{ user.name }}</h3>
+                    <span class="dashboard-card__muted">{{ user.email }}</span>
+                  </div>
+                  <div class="dashboard-card__secondary">
+                    <span class="dashboard-chip" [class.dashboard-chip--admin]="user.role === 'admin'">
+                      {{ user.role === 'admin' ? 'Admin' : 'Customer' }}
+                    </span>
+                    @if (user.phone) {
+                      <span class="dashboard-card__muted">{{ user.phone }}</span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="dashboard-empty">No customers have registered yet.</p>
+          }
+        </section>
+      }
     </main>
   </div>
 } @else {
   <div class="admin-dashboard__unauthorized">
-    <div class="unauthorized-card">
-      <h1>Admin access required</h1>
-      <p>
-        This workspace is reserved for team members with administrative permissions. Sign in with an
-        authorized account to continue.
-      </p>
-      <a class="primary" routerLink="/auth/login">Go to sign in</a>
-    </div>
+    <h2>Restricted access</h2>
+    <p>You need an administrator account to view the dashboard.</p>
   </div>
 }
+
+<ng-template #productSelectionPrompt>
+  <div class="product-editor product-editor--empty">
+    <p>Select a product from the list to start editing.</p>
+  </div>
+</ng-template>
+
+
+

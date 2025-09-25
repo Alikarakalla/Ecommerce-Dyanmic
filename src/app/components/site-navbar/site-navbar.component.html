@@ -54,7 +54,8 @@
     </a>
 
     @if (isAdmin()) {
-      <button type="button" class="site-nav__cta" (click)="customize()">Customize</button>
+      <a routerLink="/admin" class="site-nav__cta">Admin</a>
+      <button type="button" class="site-nav__cta site-nav__cta--secondary" (click)="customize()">Customize</button>
     } @else {
       <button type="button" class="site-nav__cta site-nav__cta--secondary" (click)="redirectToLogin()">Admin login</button>
     }

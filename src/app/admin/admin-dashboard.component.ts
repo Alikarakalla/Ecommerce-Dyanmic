@@ -1,7 +1,8 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   computed,
   effect,
   inject,
@@ -15,9 +16,10 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { OrderRecord } from '../models/auth.model';
 import { GeneratedSite, ProductDetails } from '../models/site.model';
 import { SiteStateService } from '../state/site-state.service';
 
@@ -37,302 +39,274 @@ type ProductFormGroup = FormGroup<{
 
 type SaveFeedback = 'idle' | 'saved';
 
+interface OrderWithCustomer extends OrderRecord {
+  customerName: string;
+  customerEmail: string;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, DatePipe],
+  imports: [CommonModule, DatePipe, CurrencyPipe, ReactiveFormsModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminDashboardComponent {
+export class AdminDashboardComponent implements OnDestroy {
   private readonly fb = inject(NonNullableFormBuilder);
-  private readonly siteState = inject(SiteStateService);
   private readonly auth = inject(AuthService);
+  private readonly siteState = inject(SiteStateService);
   private readonly router = inject(Router);
 
-  private skipNextSync = false;
-  private lastSiteSnapshot: string | null = null;
-  private saveToastTimer: ReturnType<typeof setTimeout> | null = null;
+  private skipProductSync = false;
+  private restoringProducts = false;
+  private productSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  protected readonly fallbackImage = 'https://dummyimage.com/320x320/f3f4f6/94a3b8.png&text=Preview';
 
   protected readonly isAdmin = this.auth.isAdmin;
   protected readonly hasSite = this.siteState.hasSite;
   protected readonly currentSite = this.siteState.site;
-  protected readonly totalProducts = computed(() => this.currentSite()?.products.length ?? 0);
-  protected readonly totalCategories = computed(() => {
-    const site = this.currentSite();
-    if (!site) {
-      return 0;
-    }
+  protected readonly products = this.siteState.products;
+  protected readonly users = this.auth.users;
 
-    const categories = new Set<string>();
-    site.products.forEach((product) => {
-      categories.add((product.category || 'Uncategorized').trim().toLowerCase());
-    });
+  private readonly ordersWithCustomers = computed<OrderWithCustomer[]>(() => {
+    const allUsers = this.users();
 
-    return categories.size;
+    return allUsers
+      .flatMap((user) =>
+        user.orders.map<OrderWithCustomer>((order) => ({
+          ...order,
+          customerName: user.name,
+          customerEmail: user.email
+        }))
+      )
+      .sort((a, b) => new Date(b.placedAt).getTime() - new Date(a.placedAt).getTime());
   });
 
-  protected readonly dashboardForm = this.fb.group({
-    brand: this.fb.group({
-      storeName: this.fb.control('', [Validators.required, Validators.maxLength(60)]),
-      tagline: this.fb.control('', [Validators.required, Validators.maxLength(120)]),
-      logoUrl: this.fb.control('', [Validators.required])
-    }),
-    hero: this.fb.group({
-      heroImageUrl: this.fb.control('', [Validators.required]),
-      heroCtaLabel: this.fb.control('Shop now', [Validators.required, Validators.maxLength(40)]),
-      heroCtaLink: this.fb.control('#featured-products', [Validators.required, Validators.maxLength(120)]),
-      primaryColor: this.fb.control('#2563eb', [Validators.required]),
-      accentColor: this.fb.control('#f97316', [Validators.required])
-    }),
-    about: this.fb.group({
-      title: this.fb.control('Our Story', [Validators.required, Validators.maxLength(60)]),
-      description: this.fb.control('', [Validators.required, Validators.minLength(30), Validators.maxLength(360)])
-    }),
-    contact: this.fb.group({
-      contactEmail: this.fb.control('', [Validators.required, Validators.email, Validators.maxLength(120)]),
-      contactPhone: this.fb.control('', [Validators.maxLength(40)]),
-      contactAddress: this.fb.control('', [Validators.maxLength(160)]),
-      instagramUrl: this.fb.control('', [Validators.maxLength(160)]),
-      facebookUrl: this.fb.control('', [Validators.maxLength(160)])
-    }),
+  protected readonly totalProducts = computed(() => this.products().length);
+  protected readonly totalUsers = computed(() => this.users().length);
+  protected readonly totalOrders = computed(() => this.ordersWithCustomers().length);
+  protected readonly totalRevenue = computed(() =>
+    this.ordersWithCustomers().reduce((sum, order) => sum + order.total, 0)
+  );
+
+  protected readonly recentOrders = computed(() => this.ordersWithCustomers().slice(0, 8));
+  protected readonly latestUsers = computed(() => {
+    const registered = this.users();
+    return registered.slice(Math.max(registered.length - 8, 0)).reverse();
+  });
+
+  protected readonly productManagerForm = this.fb.group({
     products: this.fb.array<ProductFormGroup>([])
   });
+  protected readonly productsArray = this.productManagerForm.controls.products;
+  protected readonly hasUnsavedProductChanges = signal(false);
+  protected readonly productSaveState = signal<SaveFeedback>('idle');
+  protected readonly selectedProductIndex = signal<number | null>(null);
+  protected readonly selectedProduct = computed<ProductFormGroup | null>(() => {
+    const index = this.selectedProductIndex();
+    if (index === null) {
+      return null;
+    }
 
-  protected readonly productsArray = this.dashboardForm.controls.products;
-  protected readonly hasUnsavedChanges = signal(false);
-  protected readonly saveFeedback = signal<SaveFeedback>('idle');
-  protected readonly lastSavedAt = signal<Date | null>(null);
+    return this.productsArray.at(index) as ProductFormGroup;
+  });
 
   constructor() {
     effect(
       () => {
         const site = this.currentSite();
-        const serialized = site ? JSON.stringify(site) : null;
+        const products = site?.products ?? [];
 
-        if (this.skipNextSync) {
-          this.skipNextSync = false;
-          this.lastSiteSnapshot = serialized;
+        if (this.skipProductSync) {
+          this.skipProductSync = false;
           return;
         }
 
-        if (serialized === this.lastSiteSnapshot) {
-          return;
-        }
-
-        this.lastSiteSnapshot = serialized;
-        this.resetForm(site ?? null);
+        this.restoreProductsForm(products);
       },
       { allowSignalWrites: true }
     );
 
-    this.dashboardForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.hasUnsavedChanges.set(this.dashboardForm.dirty);
-      if (this.saveFeedback() !== 'idle') {
-        this.saveFeedback.set('idle');
+    this.productsArray.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.restoringProducts) {
+        return;
+      }
+
+      this.hasUnsavedProductChanges.set(true);
+      if (this.productSaveState() !== 'idle') {
+        this.productSaveState.set('idle');
       }
     });
   }
 
-  protected trackByIndex(index: number): number {
+  protected trackProductControl(index: number): number {
     return index;
+  }
+
+  protected trackOrder(_: number, order: OrderWithCustomer): string {
+    return order.id;
+  }
+
+  protected trackUser(_: number, user: { id: string }): string {
+    return user.id;
+  }
+
+  protected isSelected(index: number): boolean {
+    return this.selectedProductIndex() === index;
+  }
+
+  protected previewImage(group: ProductFormGroup): string {
+    const url = group.controls.imageUrl.value?.trim();
+    return url || this.fallbackImage;
+  }
+
+  protected selectProduct(index: number): void {
+    if (index < 0 || index >= this.productsArray.length) {
+      return;
+    }
+
+    this.selectedProductIndex.set(index);
   }
 
   protected addProduct(): void {
     this.productsArray.push(this.buildProductGroup());
-    this.markDirty();
+    this.selectProduct(this.productsArray.length - 1);
+    this.hasUnsavedProductChanges.set(true);
+    this.productSaveState.set('idle');
   }
 
   protected removeProduct(index: number): void {
-    if (this.productsArray.length <= 1) {
+    if (index < 0 || index >= this.productsArray.length) {
       return;
     }
 
+    const current = this.selectedProductIndex();
     this.productsArray.removeAt(index);
-    this.markDirty();
+    this.hasUnsavedProductChanges.set(true);
+    this.productSaveState.set('idle');
+
+    if (!this.productsArray.length) {
+      this.selectedProductIndex.set(null);
+      return;
+    }
+
+    if (current === null) {
+      this.selectedProductIndex.set(0);
+      return;
+    }
+
+    if (current === index) {
+      this.selectedProductIndex.set(Math.min(index, this.productsArray.length - 1));
+    } else if (current > index) {
+      this.selectedProductIndex.set(current - 1);
+    }
   }
 
-  protected saveChanges(): void {
-    if (this.dashboardForm.invalid) {
-      this.dashboardForm.markAllAsTouched();
+  protected saveProductChanges(): void {
+    if (this.productManagerForm.invalid) {
+      this.productManagerForm.markAllAsTouched();
       return;
     }
 
-    const raw = this.dashboardForm.getRawValue();
+    const site = this.currentSite();
+    if (!site) {
+      return;
+    }
+
     const usedSlugs = new Set<string>();
-    const products: ProductDetails[] = raw.products.map((product, index) => {
-      const normalizedSlug = this.generateSlug(product.slug || product.name, index, usedSlugs);
+    const products: ProductDetails[] = this.productsArray.controls.map((group, index) => {
+      const raw = group.getRawValue();
+      const normalizedSlug = this.generateSlug(raw.slug || raw.name, index, usedSlugs);
 
       return {
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        imageUrl: product.imageUrl,
-        highlight: product.highlight,
+        name: raw.name,
+        description: raw.description,
+        price: Number(raw.price),
+        imageUrl: raw.imageUrl,
+        highlight: raw.highlight,
         slug: normalizedSlug,
-        gallery: this.parseList(product.gallery),
-        sizes: this.parseList(product.sizes),
-        colors: this.parseList(product.colors),
-        category: product.category || undefined,
-        subCategory: product.subCategory || undefined
+        gallery: this.parseList(raw.gallery),
+        sizes: this.parseList(raw.sizes),
+        colors: this.parseList(raw.colors),
+        category: raw.category || undefined,
+        subCategory: raw.subCategory || undefined
       } satisfies ProductDetails;
     });
 
-    const site: GeneratedSite = {
-      storeName: raw.brand.storeName,
-      tagline: raw.brand.tagline,
-      logoUrl: raw.brand.logoUrl,
-      heroImageUrl: raw.hero.heroImageUrl,
-      heroCtaLabel: raw.hero.heroCtaLabel,
-      heroCtaLink: raw.hero.heroCtaLink,
-      primaryColor: raw.hero.primaryColor,
-      accentColor: raw.hero.accentColor,
-      about: {
-        title: raw.about.title,
-        description: raw.about.description
-      },
-      contact: {
-        contactEmail: raw.contact.contactEmail,
-        contactPhone: raw.contact.contactPhone,
-        contactAddress: raw.contact.contactAddress,
-        instagramUrl: raw.contact.instagramUrl,
-        facebookUrl: raw.contact.facebookUrl
-      },
+    const updatedSite = {
+      ...site,
       products
     } satisfies GeneratedSite;
 
-    this.skipNextSync = true;
-    this.siteState.setSite(site);
-    this.resetForm(site);
-    this.hasUnsavedChanges.set(false);
-    this.saveFeedback.set('saved');
-    this.lastSavedAt.set(new Date());
+    this.skipProductSync = true;
+    this.siteState.setSite(updatedSite);
+    this.hasUnsavedProductChanges.set(false);
+    this.productManagerForm.markAsPristine();
+    this.productManagerForm.markAsUntouched();
+    this.productSaveState.set('saved');
 
-    if (this.saveToastTimer) {
-      clearTimeout(this.saveToastTimer);
+    if (this.productSaveTimer) {
+      clearTimeout(this.productSaveTimer);
     }
 
-    this.saveToastTimer = setTimeout(() => {
-      this.saveFeedback.set('idle');
-      this.saveToastTimer = null;
+    this.productSaveTimer = setTimeout(() => {
+      this.productSaveState.set('idle');
+      this.productSaveTimer = null;
     }, 2500);
-  }
-
-  protected startWizard(): void {
-    if (this.siteState.openWizard()) {
-      void this.router.navigateByUrl('/');
-    }
   }
 
   protected navigateToStore(): void {
     void this.router.navigateByUrl('/');
   }
 
-  private markDirty(): void {
-    if (!this.dashboardForm.dirty) {
-      this.dashboardForm.markAsDirty();
+  ngOnDestroy(): void {
+    if (this.productSaveTimer) {
+      clearTimeout(this.productSaveTimer);
     }
-    this.hasUnsavedChanges.set(true);
   }
 
-  private resetForm(site: GeneratedSite | null): void {
-    const brandGroup = this.dashboardForm.controls.brand;
-    const heroGroup = this.dashboardForm.controls.hero;
-    const aboutGroup = this.dashboardForm.controls.about;
-    const contactGroup = this.dashboardForm.controls.contact;
-    const productsArray = this.productsArray;
+  private restoreProductsForm(products: ProductDetails[]): void {
+    this.restoringProducts = true;
+    const previousIndex = this.selectedProductIndex();
 
-    while (productsArray.length) {
-      productsArray.removeAt(0);
-    }
-
-    if (!site) {
-      brandGroup.reset({ storeName: '', tagline: '', logoUrl: '' }, { emitEvent: false });
-      heroGroup.reset(
-        {
-          heroImageUrl: '',
-          heroCtaLabel: 'Shop now',
-          heroCtaLink: '#featured-products',
-          primaryColor: '#2563eb',
-          accentColor: '#f97316'
-        },
-        { emitEvent: false }
-      );
-      aboutGroup.reset(
-        {
-          title: 'Our Story',
-          description:
-            'Share the heart of your brand, your craft, and what makes your products worth discovering.'
-        },
-        { emitEvent: false }
-      );
-      contactGroup.reset(
-        {
-          contactEmail: '',
-          contactPhone: '',
-          contactAddress: '',
-          instagramUrl: '',
-          facebookUrl: ''
-        },
-        { emitEvent: false }
-      );
-      productsArray.push(this.buildProductGroup());
-    } else {
-      brandGroup.reset(
-        {
-          storeName: site.storeName,
-          tagline: site.tagline,
-          logoUrl: site.logoUrl
-        },
-        { emitEvent: false }
-      );
-      heroGroup.reset(
-        {
-          heroImageUrl: site.heroImageUrl,
-          heroCtaLabel: site.heroCtaLabel,
-          heroCtaLink: site.heroCtaLink,
-          primaryColor: site.primaryColor,
-          accentColor: site.accentColor
-        },
-        { emitEvent: false }
-      );
-      aboutGroup.reset(
-        {
-          title: site.about.title,
-          description: site.about.description
-        },
-        { emitEvent: false }
-      );
-      contactGroup.reset(
-        {
-          contactEmail: site.contact.contactEmail,
-          contactPhone: site.contact.contactPhone ?? '',
-          contactAddress: site.contact.contactAddress ?? '',
-          instagramUrl: site.contact.instagramUrl ?? '',
-          facebookUrl: site.contact.facebookUrl ?? ''
-        },
-        { emitEvent: false }
-      );
-
-      site.products.forEach((product) => {
-        productsArray.push(this.buildProductGroup(product));
-      });
-
-      if (!productsArray.length) {
-        productsArray.push(this.buildProductGroup());
+    try {
+      while (this.productsArray.length) {
+        this.productsArray.removeAt(this.productsArray.length - 1);
       }
-    }
 
-    this.dashboardForm.markAsPristine();
-    this.dashboardForm.markAsUntouched();
-    this.hasUnsavedChanges.set(false);
+      if (!products.length) {
+        this.productsArray.push(this.buildProductGroup());
+      } else {
+        products.forEach((product) => {
+          this.productsArray.push(this.buildProductGroup(product));
+        });
+      }
+
+      this.productManagerForm.markAsPristine();
+      this.productManagerForm.markAsUntouched();
+      this.hasUnsavedProductChanges.set(false);
+      this.productSaveState.set('idle');
+
+      if (!this.productsArray.length) {
+        this.selectedProductIndex.set(null);
+        return;
+      }
+
+      if (previousIndex !== null && previousIndex < this.productsArray.length) {
+        this.selectedProductIndex.set(previousIndex);
+      } else {
+        this.selectedProductIndex.set(0);
+      }
+    } finally {
+      this.restoringProducts = false;
+    }
   }
 
   private buildProductGroup(initial?: ProductDetails): ProductFormGroup {
     return this.fb.group({
       name: this.fb.control(initial?.name ?? '', [Validators.required, Validators.maxLength(60)]),
-      description: this.fb.control(initial?.description ?? '', [Validators.required, Validators.maxLength(200)]),
+      description: this.fb.control(initial?.description ?? '', [Validators.required, Validators.minLength(30), Validators.maxLength(250)]),
       price: this.fb.control(initial?.price ?? 0, [Validators.required, Validators.min(0)]),
       imageUrl: this.fb.control(initial?.imageUrl ?? '', [Validators.required]),
       highlight: this.fb.control(initial?.highlight ?? '', [Validators.maxLength(80)]),
@@ -347,7 +321,7 @@ export class AdminDashboardComponent {
 
   private parseList(value: string): string[] | undefined {
     const entries = value
-      .split(/[\n,]+/)
+      .split(/[\n\r,]+/)
       .map((entry) => entry.trim())
       .filter(Boolean);
 
@@ -378,3 +352,4 @@ export class AdminDashboardComponent {
     return slug;
   }
 }
+
