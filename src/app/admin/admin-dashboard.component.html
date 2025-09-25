@@ -1,0 +1,300 @@
+@if (isAdmin()) {
+  <div class="admin-dashboard">
+    <header class="admin-dashboard__masthead">
+      <div>
+        <p class="admin-dashboard__eyebrow">Operations overview</p>
+        <h1>Admin control center</h1>
+        <p>
+          Review storefront health, catalog performance, and customer activity without leaving the
+          dashboard.
+        </p>
+      </div>
+      <div class="admin-dashboard__actions">
+        <button type="button" class="ghost" (click)="startWizard()">Launch setup wizard</button>
+        <a class="primary" routerLink="/">View storefront</a>
+      </div>
+    </header>
+
+    <section class="admin-dashboard__metrics">
+      <article class="metric-card">
+        <span class="metric-card__label">Products live</span>
+        <span class="metric-card__value">{{ totalProducts() }}</span>
+        <small class="metric-card__meta">
+          @if (totalProducts()) {
+            {{ totalCategories() }} categories published
+          } @else {
+            No products created yet
+          }
+        </small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__label">Customers</span>
+        <span class="metric-card__value">{{ totalCustomers() }}</span>
+        <small class="metric-card__meta">
+          @if (totalCustomers()) {
+            {{ engagedCustomers() }} with orders
+          } @else {
+            Waiting for first sign up
+          }
+        </small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__label">Orders</span>
+        <span class="metric-card__value">{{ totalOrders() }}</span>
+        <small class="metric-card__meta">
+          @if (totalOrders()) {
+            {{ totalUnitsSold() }} items sold
+          } @else {
+            No orders captured yet
+          }
+        </small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-card__label">Revenue</span>
+        <span class="metric-card__value">{{ totalRevenue() | currency }}</span>
+        <small class="metric-card__meta">
+          @if (totalOrders()) {
+            Avg. order {{ averageOrderValue() | currency }}
+          } @else {
+            Waiting for first sale
+          }
+        </small>
+      </article>
+    </section>
+
+    <section class="panel panel--store">
+      <header class="panel__header">
+        <div>
+          <h2>Storefront snapshot</h2>
+          <p>Live branding, hero, and contact details pulled from the published experience.</p>
+        </div>
+      </header>
+      @if (hasSite()) {
+        <div class="store-card" [style.--primary-color]="storePalette().primary" [style.--accent-color]="storePalette().accent">
+          <div
+            class="store-card__hero"
+            [class.store-card__hero--empty]="!heroBackground()"
+            [style.background-image]="heroBackground() ?? 'none'"
+          >
+            <div class="store-card__hero-content">
+              <span class="store-card__badge">{{ site()?.heroCtaLabel }}</span>
+              <h3>{{ site()?.storeName }}</h3>
+              <p>{{ site()?.tagline }}</p>
+              <small>Primary CTA links to {{ site()?.heroCtaLink }}</small>
+            </div>
+          </div>
+          <div class="store-card__details">
+            <dl class="store-card__list">
+              <div>
+                <dt>Logo</dt>
+                <dd>
+                  @if (site()?.logoUrl) {
+                    <a [href]="site()?.logoUrl" target="_blank" rel="noopener">{{ site()?.logoUrl }}</a>
+                  } @else {
+                    Not provided
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>About section</dt>
+                <dd>
+                  <strong>{{ site()?.about?.title }}</strong>
+                  <p>{{ site()?.about?.description }}</p>
+                </dd>
+              </div>
+              <div>
+                <dt>Contact</dt>
+                <dd>
+                  <ul class="store-card__contact">
+                    @if (site()?.contact?.contactEmail) {
+                      <li>Email: <a [href]="'mailto:' + site()?.contact?.contactEmail">{{ site()?.contact?.contactEmail }}</a></li>
+                    }
+                    @if (site()?.contact?.contactPhone) {
+                      <li>Phone: {{ site()?.contact?.contactPhone }}</li>
+                    }
+                    @if (site()?.contact?.contactAddress) {
+                      <li>Address: {{ site()?.contact?.contactAddress }}</li>
+                    }
+                    @if (site()?.contact?.instagramUrl) {
+                      <li>Instagram: <a [href]="site()?.contact?.instagramUrl" target="_blank" rel="noopener">{{ site()?.contact?.instagramUrl }}</a></li>
+                    }
+                    @if (site()?.contact?.facebookUrl) {
+                      <li>Facebook: <a [href]="site()?.contact?.facebookUrl" target="_blank" rel="noopener">{{ site()?.contact?.facebookUrl }}</a></li>
+                    }
+                  </ul>
+                  @if (!site()?.contact?.contactEmail && !site()?.contact?.contactPhone && !site()?.contact?.contactAddress && !site()?.contact?.instagramUrl && !site()?.contact?.facebookUrl) {
+                    <p class="store-card__empty">No contact details configured.</p>
+                  }
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      } @else {
+        <div class="panel__empty">
+          <h3>No storefront configured</h3>
+          <p>Launch the setup wizard to generate your first storefront experience.</p>
+        </div>
+      }
+    </section>
+
+    <div class="admin-dashboard__grid admin-dashboard__grid--two">
+      <section class="panel panel--products">
+        <header class="panel__header">
+          <div>
+            <h2>Catalog spotlight</h2>
+            <p>Showing up to eight products currently visible in the store.</p>
+          </div>
+        </header>
+        @if (totalProducts()) {
+          <div class="product-grid">
+            @for (product of productSnapshots(); track product.slug) {
+              <article class="product-tile">
+                <div class="product-tile__head">
+                  <h3>{{ product.name }}</h3>
+                  @if (product.highlight) {
+                    <span class="pill pill--accent">{{ product.highlight }}</span>
+                  }
+                </div>
+                <p class="product-tile__meta">
+                  {{ product.category ?? 'Uncategorized' }}
+                  @if (product.subCategory) {
+                    · {{ product.subCategory }}
+                  }
+                </p>
+                <p class="product-tile__price">{{ product.price | currency }}</p>
+                <p class="product-tile__slug">/{{ product.slug }}</p>
+              </article>
+            }
+          </div>
+          <footer class="panel__footer">
+            Catalog value {{ catalogValue() | currency }}
+            @if (totalProducts() > productSnapshots().length) {
+              · {{ totalProducts() - productSnapshots().length }} additional products not shown.
+            }
+          </footer>
+        } @else {
+          <div class="panel__empty">
+            <h3>No products yet</h3>
+            <p>Use the wizard to add items to your catalog.</p>
+          </div>
+        }
+      </section>
+
+      <section class="panel panel--customers">
+        <header class="panel__header">
+          <div>
+            <h2>Customer activity</h2>
+            <p>Track registered shoppers and their purchasing cadence.</p>
+          </div>
+        </header>
+        @if (totalCustomers()) {
+          <ul class="customer-list">
+            @for (customer of topCustomers(); track customer.id) {
+              <li class="customer-card">
+                <div class="customer-card__identity">
+                  <h3>{{ customer.name }}</h3>
+                  <a [href]="'mailto:' + customer.email">{{ customer.email }}</a>
+                </div>
+                <div class="customer-card__stats">
+                  <span>{{ customer.orders }} orders</span>
+                  <span>{{ customer.totalSpent | currency }}</span>
+                </div>
+                <p class="customer-card__meta">
+                  @if (customer.lastOrderAt) {
+                    Last order {{ customer.lastOrderAt | date: 'mediumDate' }}
+                  } @else {
+                    Yet to place an order
+                  }
+                </p>
+              </li>
+            }
+          </ul>
+          @if (totalCustomers() > topCustomers().length) {
+            <footer class="panel__footer">
+              {{ totalCustomers() - topCustomers().length }} more customer(s) available in the list.
+            </footer>
+          }
+        } @else {
+          <div class="panel__empty">
+            <h3>No customer sign ups</h3>
+            <p>Encourage visitors to create an account to track their orders.</p>
+          </div>
+        }
+      </section>
+    </div>
+
+    <section class="panel panel--orders">
+      <header class="panel__header">
+        <div>
+          <h2>Recent orders</h2>
+          <p>Monitor fulfillment details and payment methods for incoming orders.</p>
+        </div>
+      </header>
+      @if (totalOrders()) {
+        <ul class="order-list">
+          @for (order of recentOrders(); track order.id) {
+            <li class="order-card">
+              <div class="order-card__primary">
+                <span class="order-card__id">#{{ order.id }}</span>
+                <span class="order-card__total">{{ order.total | currency }}</span>
+              </div>
+              <div class="order-card__meta">
+                <span>{{ order.placedAt | date: 'medium' }}</span>
+                <span>{{ order.itemCount }} items · {{ order.paymentMethod | titlecase }}</span>
+              </div>
+              <div class="order-card__customer">
+                <span>{{ order.customerName }}</span>
+                <a [href]="'mailto:' + order.customerEmail">{{ order.customerEmail }}</a>
+              </div>
+              <ul class="order-card__items">
+                @for (item of order.items; track $index) {
+                  <li>
+                    <span class="order-card__item-name">{{ item.quantity }}× {{ item.name }}</span>
+                    @if (item.variant?.size || item.variant?.color) {
+                      <span class="order-card__variant">
+                        (
+                        @if (item.variant?.size) {
+                          {{ item.variant?.size }}
+                        }
+                        @if (item.variant?.size && item.variant?.color) {
+                          ·
+                        }
+                        @if (item.variant?.color) {
+                          {{ item.variant?.color }}
+                        }
+                        )
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+            </li>
+          }
+        </ul>
+        <footer class="panel__footer">
+          Showing {{ recentOrders().length }} of {{ totalOrders() }} order(s).
+          @if (lastOrderAt()) {
+            Last order placed {{ lastOrderAt() | date: 'medium' }}
+          }
+        </footer>
+      } @else {
+        <div class="panel__empty">
+          <h3>No orders received</h3>
+          <p>Orders will appear here as soon as customers check out.</p>
+        </div>
+      }
+    </section>
+  </div>
+} @else {
+  <div class="admin-dashboard__unauthorized">
+    <div class="unauthorized-card">
+      <h1>Admin access required</h1>
+      <p>
+        This workspace is reserved for team members with administrative permissions. Sign in with an
+        authorized account to continue.
+      </p>
+      <a class="primary" routerLink="/auth/login">Go to sign in</a>
+    </div>
+  </div>
+}
