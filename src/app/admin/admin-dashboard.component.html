@@ -1,0 +1,265 @@
+@if (isAdmin()) {
+  <div class="admin-dashboard">
+    <header class="admin-dashboard__hero">
+      <div class="admin-dashboard__intro">
+        <h1>Store Control Center</h1>
+        <p>
+          Shape every part of your storefront from a single, focused workspace. Manage branding,
+          inventory, and contact touchpoints with live feedback.
+        </p>
+        <div class="admin-dashboard__actions">
+          <button type="button" class="ghost" (click)="startWizard()">Launch setup wizard</button>
+          <button type="button" class="ghost" (click)="navigateToStore()">View live site</button>
+        </div>
+      </div>
+      <section class="admin-dashboard__metrics">
+        <article class="metric">
+          <span class="metric__label">Products</span>
+          <span class="metric__value">{{ totalProducts() }}</span>
+          <small class="metric__hint">Currently visible on the storefront</small>
+        </article>
+        <article class="metric">
+          <span class="metric__label">Categories</span>
+          <span class="metric__value">{{ totalCategories() }}</span>
+          <small class="metric__hint">Grouped by primary product category</small>
+        </article>
+        <article class="metric">
+          <span class="metric__label">Status</span>
+          <span class="metric__value metric__value--status">
+            @if (hasUnsavedChanges()) {
+              Draft
+            } @else {
+              Published
+            }
+          </span>
+          <small class="metric__hint">
+            @if (lastSavedAt()) {
+              Last saved {{ lastSavedAt() | date: 'shortTime' }}
+            } @else {
+              Save to push live updates
+            }
+          </small>
+        </article>
+      </section>
+    </header>
+
+    <main class="admin-dashboard__content">
+      @if (!hasSite()) {
+        <div class="admin-dashboard__empty">
+          <h2>No storefront configured yet</h2>
+          <p>
+            You can start fresh by completing the form below or launch the guided wizard to generate
+            a polished store in minutes.
+          </p>
+        </div>
+      }
+
+      <form class="dashboard-form" [formGroup]="dashboardForm" (ngSubmit)="saveChanges()">
+        <section class="form-section" formGroupName="brand">
+          <div class="section-header">
+            <h2>Brand foundation</h2>
+            <p>Control how your shop introduces itself to visitors.</p>
+          </div>
+          <div class="field-grid">
+            <label class="field">
+              <span>Store name</span>
+              <input type="text" formControlName="storeName" placeholder="Acme Collective" />
+            </label>
+            <label class="field">
+              <span>Tagline</span>
+              <input type="text" formControlName="tagline" placeholder="Everyday staples, elevated" />
+            </label>
+            <label class="field field--full">
+              <span>Logo URL</span>
+              <input type="url" formControlName="logoUrl" placeholder="https://cdn.yoursite.com/logo.svg" />
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section" formGroupName="hero">
+          <div class="section-header">
+            <h2>Hero experience</h2>
+            <p>Refresh imagery, calls-to-action, and brand colors in one place.</p>
+          </div>
+          <div class="field-grid">
+            <label class="field field--full">
+              <span>Hero image URL</span>
+              <input type="url" formControlName="heroImageUrl" placeholder="https://images.unsplash.com/..." />
+            </label>
+            <label class="field">
+              <span>Primary button label</span>
+              <input type="text" formControlName="heroCtaLabel" placeholder="Shop the collection" />
+            </label>
+            <label class="field">
+              <span>Primary button link</span>
+              <input type="text" formControlName="heroCtaLink" placeholder="#featured-products" />
+            </label>
+            <label class="field">
+              <span>Primary color</span>
+              <input type="color" formControlName="primaryColor" />
+            </label>
+            <label class="field">
+              <span>Accent color</span>
+              <input type="color" formControlName="accentColor" />
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section" formGroupName="about">
+          <div class="section-header">
+            <h2>About spotlight</h2>
+            <p>Tell the story that anchors your brand promise.</p>
+          </div>
+          <div class="field-grid">
+            <label class="field">
+              <span>Headline</span>
+              <input type="text" formControlName="title" placeholder="Our Story" />
+            </label>
+            <label class="field field--full">
+              <span>Narrative</span>
+              <textarea formControlName="description" rows="4" placeholder="Share what makes your products special"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section" formGroupName="contact">
+          <div class="section-header">
+            <h2>Contact & social</h2>
+            <p>Keep customer communication touchpoints accurate and current.</p>
+          </div>
+          <div class="field-grid">
+            <label class="field">
+              <span>Support email</span>
+              <input type="email" formControlName="contactEmail" placeholder="hello@yoursite.com" />
+            </label>
+            <label class="field">
+              <span>Phone</span>
+              <input type="text" formControlName="contactPhone" placeholder="+1 (555) 000-1234" />
+            </label>
+            <label class="field field--full">
+              <span>Address</span>
+              <input type="text" formControlName="contactAddress" placeholder="123 Market Street, San Francisco" />
+            </label>
+            <label class="field">
+              <span>Instagram</span>
+              <input type="url" formControlName="instagramUrl" placeholder="https://instagram.com/yourbrand" />
+            </label>
+            <label class="field">
+              <span>Facebook</span>
+              <input type="url" formControlName="facebookUrl" placeholder="https://facebook.com/yourbrand" />
+            </label>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-header">
+            <div>
+              <h2>Product catalog</h2>
+              <p>Curate the merchandise that powers your storefront experience.</p>
+            </div>
+            <button type="button" class="ghost" (click)="addProduct()">Add product</button>
+          </div>
+
+          <div formArrayName="products" class="products-grid">
+            @for (product of productsArray.controls; track trackByIndex($index); let i = $index) {
+              <article class="product-card" [formGroupName]="i">
+                <header class="product-card__header">
+                  <div>
+                    <h3>Product {{ i + 1 }}</h3>
+                    <p>Update details, imagery, and merchandising highlights.</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="ghost ghost--danger"
+                    (click)="removeProduct(i)"
+                    [disabled]="productsArray.length <= 1"
+                  >
+                    Remove
+                  </button>
+                </header>
+
+                <div class="product-card__body">
+                  <div class="field-grid">
+                    <label class="field">
+                      <span>Name</span>
+                      <input type="text" formControlName="name" placeholder="Everyday Tote" />
+                    </label>
+                    <label class="field">
+                      <span>Highlight badge</span>
+                      <input type="text" formControlName="highlight" placeholder="Limited Release" />
+                    </label>
+                    <label class="field">
+                      <span>Price</span>
+                      <input type="number" formControlName="price" min="0" step="0.01" />
+                    </label>
+                    <label class="field">
+                      <span>Slug</span>
+                      <input type="text" formControlName="slug" placeholder="everyday-tote" />
+                    </label>
+                    <label class="field field--full">
+                      <span>Description</span>
+                      <textarea formControlName="description" rows="3" placeholder="Describe the product features"></textarea>
+                    </label>
+                    <label class="field field--full">
+                      <span>Main image URL</span>
+                      <input type="url" formControlName="imageUrl" placeholder="https://images.unsplash.com/..." />
+                    </label>
+                    <label class="field field--full">
+                      <span>Gallery images</span>
+                      <textarea
+                        formControlName="gallery"
+                        rows="3"
+                        placeholder="Add one URL per line"
+                      ></textarea>
+                    </label>
+                    <label class="field">
+                      <span>Available sizes</span>
+                      <textarea formControlName="sizes" rows="2" placeholder="S\nM\nL"></textarea>
+                    </label>
+                    <label class="field">
+                      <span>Available colors</span>
+                      <textarea formControlName="colors" rows="2" placeholder="Charcoal\nSand"></textarea>
+                    </label>
+                    <label class="field">
+                      <span>Category</span>
+                      <input type="text" formControlName="category" placeholder="Apparel" />
+                    </label>
+                    <label class="field">
+                      <span>Sub category</span>
+                      <input type="text" formControlName="subCategory" placeholder="Outerwear" />
+                    </label>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+
+        <footer class="form-footer">
+          <div class="form-footer__status">
+            @if (hasUnsavedChanges()) {
+              <span class="status-pill status-pill--warning">Unsaved changes</span>
+            }
+            @if (saveFeedback() === 'saved') {
+              <span class="status-pill status-pill--success">Changes published</span>
+            }
+          </div>
+          <button type="submit" class="primary" [disabled]="dashboardForm.invalid || !hasUnsavedChanges()">
+            Publish updates
+          </button>
+        </footer>
+      </form>
+    </main>
+  </div>
+} @else {
+  <div class="admin-dashboard__unauthorized">
+    <div class="unauthorized-card">
+      <h1>Admin access required</h1>
+      <p>
+        This workspace is reserved for team members with administrative permissions. Sign in with an
+        authorized account to continue.
+      </p>
+      <a class="primary" routerLink="/auth/login">Go to sign in</a>
+    </div>
+  </div>
+}
