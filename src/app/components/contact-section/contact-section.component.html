@@ -1,0 +1,25 @@
+﻿<section class="contact-section" id="about">
+  <div class="contact-section__about">
+    <h2>{{ site.about.title }}</h2>
+    <p>{{ site.about.description }}</p>
+  </div>
+
+  <div class="contact-section__details" id="contact">
+    <h3>Stay in touch</h3>
+    <ul>
+      <li><a [href]="'mailto:' + site.contact.contactEmail">{{ site.contact.contactEmail }}</a></li>
+      @if (site.contact.contactPhone) {
+        <li><a [href]="'tel:' + site.contact.contactPhone">{{ site.contact.contactPhone }}</a></li>
+      }
+      @if (site.contact.contactAddress) {
+        <li>{{ site.contact.contactAddress }}</li>
+      }
+      @if (site.contact.instagramUrl) {
+        <li><a [href]="site.contact.instagramUrl" target="_blank" rel="noopener">Instagram</a></li>
+      }
+      @if (site.contact.facebookUrl) {
+        <li><a [href]="site.contact.facebookUrl" target="_blank" rel="noopener">Facebook</a></li>
+      }
+    </ul>
+  </div>
+</section>

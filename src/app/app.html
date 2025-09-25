@@ -1,0 +1,14 @@
+@if (wizardOpen()) {
+  <app-setup-wizard
+    [site]="currentSite()"
+    (completed)="handleSiteGenerated($event)"
+    (cancelled)="handleWizardCancelled()"
+  />
+}
+
+@if (accountModalOpen()) {
+  <app-account-modal />
+}
+
+<router-outlet />
+

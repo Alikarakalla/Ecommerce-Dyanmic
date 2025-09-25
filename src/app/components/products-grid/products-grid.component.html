@@ -1,0 +1,68 @@
+<section class="products-grid" id="featured-products">
+  <div class="products-grid__head">
+    <div>
+      <h2>{{ title() }}</h2>
+      <p>{{ subtitle() }}</p>
+    </div>
+    @if (activeCategory()) {
+      <button type="button" class="products-grid__clear" (click)="clearFilter()">Clear filter</button>
+    }
+  </div>
+
+  @if (products.length) {
+    <div class="products-grid__items">
+      @for (product of products; track product.slug) {
+        <article class="product-card">
+          <button
+            type="button"
+            class="product-card__favorite"
+            [class.product-card__favorite--active]="isFavorite(product)"
+            (click)="toggleFavorite(product)"
+            aria-label="Toggle {{ product.name }} favorite"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 21s-7.5-4.4-10-9.4C-0.9 5.8 2.2 1.5 6.6 2.1 8.7 2.4 10.3 3.9 12 6c1.7-2.1 3.3-3.6 5.4-3.9 4.4-0.6 7.5 3.7 4.6 9.5-2.5 5-10 9.4-10 9.4z"
+                vector-effect="non-scaling-stroke"
+              />
+            </svg>
+          </button>
+
+          <a class="product-card__image" [routerLink]="['/product', product.slug]">
+            <figure>
+              <img [src]="product.imageUrl" alt="{{ product.name }}" />
+              @if (product.highlight) {
+                <figcaption>{{ product.highlight }}</figcaption>
+              }
+            </figure>
+          </a>
+
+          <div class="product-card__body">
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description }}</p>
+            <p class="product-card__price">${{ product.price | number: '1.0-0' }}</p>
+          </div>
+
+          <div class="product-card__actions">
+            <button
+              type="button"
+              class="product-card__action"
+              (click)="addToCart(product)"
+              [disabled]="isInCart(product)"
+            >
+              {{ isInCart(product) ? 'In cart' : 'Add to cart' }}
+            </button>
+            <a class="product-card__details" [routerLink]="['/product', product.slug]">View details</a>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="products-grid__empty">
+      <h3>No products in this category</h3>
+      <p>Try switching categories or clearing the filter to explore more products.</p>
+      <button type="button" (click)="clearFilter()">Show all products</button>
+    </div>
+  }
+</section>
+

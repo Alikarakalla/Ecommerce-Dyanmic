@@ -1,0 +1,69 @@
+﻿:host {
+  display: block;
+}
+
+.home-placeholder {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 4rem 1.5rem;
+}
+
+.home-placeholder__panel {
+  background: #ffffff;
+  padding: clamp(2rem, 4vw, 3rem);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+  max-width: 520px;
+  text-align: center;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.home-placeholder__panel button {
+  justify-self: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.85rem;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.home-placeholder__panel button:hover {
+  background: #1d4ed8;
+}
+
+.home-placeholder__hint {
+  margin: 0;
+  color: #4b5563;
+}
+
+.home-placeholder__cta {
+  justify-self: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-placeholder__cta--primary {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.home > app-site-footer {
+  margin-top: auto;
+}

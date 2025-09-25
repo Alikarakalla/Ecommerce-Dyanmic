@@ -1,0 +1,59 @@
+@if (!site()) {
+  <section class="favorites-placeholder">
+    <div class="favorites-placeholder__panel">
+      <h1>No storefront yet</h1>
+      <p>Sign in as an admin and launch the setup wizard to start curating products.</p>
+      <a routerLink="/auth/login" class="favorites-placeholder__cta">Admin sign in</a>
+    </div>
+  </section>
+} @else if (site(); as siteData) {
+  <div class="favorites">
+    <app-site-navbar [site]="siteData"></app-site-navbar>
+    <section class="favorites__body">
+      <header class="favorites__header">
+        <div>
+          <h1>Saved items</h1>
+          <p>Your curated list of products you do not want to lose track of.</p>
+        </div>
+        <span class="favorites__count">{{ favorites().length }} saved</span>
+      </header>
+
+      @if (hasFavorites()) {
+        <div class="favorites__grid">
+          @for (product of favorites(); track trackByProduct($index, product)) {
+            <article class="favorites-card">
+              <img [src]="product.imageUrl" alt="{{ product.name }}" />
+              <div class="favorites-card__body">
+                <h2>{{ product.name }}</h2>
+                <p>{{ product.description }}</p>
+                <p class="favorites-card__price">${{ product.price | number: '1.0-0' }}</p>
+                <div class="favorites-card__meta">
+                  <span>{{ product.category || 'Catalog' }}</span>
+                  @if (product.subCategory) {
+                    <span>· {{ product.subCategory }}</span>
+                  }
+                  @if (product.highlight) {
+                    <span class="favorites-card__badge">{{ product.highlight }}</span>
+                  }
+                </div>
+              </div>
+              <div class="favorites-card__actions">
+                <button type="button" (click)="addToCart(product)">Add to cart</button>
+                <button type="button" class="favorites-card__remove" (click)="removeFavorite(product.slug)">Remove</button>
+                <a [routerLink]="['/product', product.slug]">View details</a>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="favorites__empty">
+          <h2>Your favorites list is empty</h2>
+          <p>Browse the catalog and tap the heart icon to save items you love.</p>
+          <a routerLink="/" fragment="featured-products">Discover products</a>
+        </div>
+      }
+    </section>
+    <app-site-footer [site]="siteData"></app-site-footer>
+  </div>
+}
+

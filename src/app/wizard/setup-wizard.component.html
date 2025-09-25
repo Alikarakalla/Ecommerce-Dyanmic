@@ -1,0 +1,211 @@
+﻿<div class="wizard-backdrop">
+  <div class="wizard" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+    <button type="button" class="wizard__close" aria-label="Close wizard" (click)="cancelWizard()">
+      ✕
+    </button>
+    <header class="wizard__header">
+      <div>
+        <p class="wizard__eyebrow">Store setup wizard</p>
+        <h1 id="wizard-title">{{ currentStepMeta().title }}</h1>
+        <p class="wizard__subtitle">{{ currentStepMeta().description }}</p>
+      </div>
+      <div class="wizard__progress" role="list">
+        @for (step of steps; track step.title; let index = $index) {
+          <button
+            type="button"
+            role="listitem"
+            class="wizard__progress-step"
+            [class.wizard__progress-step--active]="currentStep() === index"
+            [class.wizard__progress-step--complete]="index < currentStep()"
+            (click)="goToStep(index)"
+          >
+            <span class="wizard__progress-index">{{ index + 1 }}</span>
+            <span class="wizard__progress-label">{{ step.title }}</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <form class="wizard__form" [formGroup]="wizardForm" (ngSubmit)="submitWizard()">
+      @switch (currentStep()) {
+        @case (0) {
+          <section formGroupName="brand" class="wizard__section">
+            <div class="wizard__grid">
+              <label class="field">
+                <span class="field__label">Store name</span>
+                <input type="text" formControlName="storeName" placeholder="Nova Supply Co." />
+                @if (brandControls.storeName.touched && brandControls.storeName.invalid) {
+                  <span class="field__error">Add a store name to keep shoppers oriented.</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">Tagline</span>
+                <input type="text" formControlName="tagline" placeholder="Everyday essentials, elevated." />
+                @if (brandControls.tagline.touched && brandControls.tagline.invalid) {
+                  <span class="field__error">Share a short sentence that sells your story.</span>
+                }
+              </label>
+
+              <label class="field field--full">
+                <span class="field__label">Logo image URL</span>
+                <input type="url" formControlName="logoUrl" placeholder="https://.../logo.svg" />
+                @if (brandControls.logoUrl.touched && brandControls.logoUrl.invalid) {
+                  <span class="field__error">Link to a logo or wordmark to finish branding.</span>
+                }
+              </label>
+            </div>
+          </section>
+        }
+
+        @case (1) {
+          <section formGroupName="visuals" class="wizard__section">
+            <div class="wizard__grid">
+              <label class="field field--full">
+                <span class="field__label">Hero image URL</span>
+                <input type="url" formControlName="heroImageUrl" placeholder="https://..." />
+                @if (visualControls.heroImageUrl.touched && visualControls.heroImageUrl.invalid) {
+                  <span class="field__error">Hero imagery sets the tone—add a photo or illustration.</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">Primary brand color</span>
+                <input type="color" formControlName="primaryColor" />
+              </label>
+
+              <label class="field">
+                <span class="field__label">Accent color</span>
+                <input type="color" formControlName="accentColor" />
+              </label>
+
+              <label class="field">
+                <span class="field__label">Hero button label</span>
+                <input type="text" formControlName="heroCtaLabel" placeholder="Shop the collection" />
+                @if (visualControls.heroCtaLabel.touched && visualControls.heroCtaLabel.invalid) {
+                  <span class="field__error">Give shoppers a clear next action.</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">Hero button link</span>
+                <input type="text" formControlName="heroCtaLink" placeholder="#featured-products" />
+                @if (visualControls.heroCtaLink.touched && visualControls.heroCtaLink.invalid) {
+                  <span class="field__error">Point the button toward a helpful destination.</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">About section title</span>
+                <input type="text" formControlName="aboutTitle" placeholder="Our Story" />
+              </label>
+
+              <label class="field field--full">
+                <span class="field__label">About section description</span>
+                <textarea rows="4" formControlName="aboutDescription" placeholder="Tell shoppers what makes your brand stand out."></textarea>
+                @if (visualControls.aboutDescription.touched && visualControls.aboutDescription.invalid) {
+                  <span class="field__error">Share at least a few sentences—aim for 30+ characters.</span>
+                }
+              </label>
+            </div>
+          </section>
+        }
+
+        @case (2) {
+          <section formGroupName="contact" class="wizard__section">
+            <div class="wizard__grid">
+              <label class="field">
+                <span class="field__label">Contact email</span>
+                <input type="email" formControlName="contactEmail" placeholder="hello@brand.com" />
+                @if (contactControls.contactEmail.touched && contactControls.contactEmail.invalid) {
+                  <span class="field__error">Share a valid inbox so customers can reach you.</span>
+                }
+              </label>
+
+              <label class="field">
+                <span class="field__label">Contact phone</span>
+                <input type="text" formControlName="contactPhone" placeholder="(555) 123-4567" />
+              </label>
+
+              <label class="field field--full">
+                <span class="field__label">Store or studio address</span>
+                <input type="text" formControlName="contactAddress" placeholder="100 Market Street, San Francisco" />
+              </label>
+
+              <label class="field">
+                <span class="field__label">Instagram URL</span>
+                <input type="url" formControlName="instagramUrl" placeholder="https://instagram.com/yourbrand" />
+              </label>
+
+              <label class="field">
+                <span class="field__label">Facebook URL</span>
+                <input type="url" formControlName="facebookUrl" placeholder="https://facebook.com/yourbrand" />
+              </label>
+            </div>
+          </section>
+        }
+
+        @case (3) {
+          <section class="wizard__section" formArrayName="products">
+            <div class="wizard__products">
+              @for (group of productsArray.controls; let index = $index; track index) {
+                <fieldset class="product-card" [formGroupName]="index">
+                  <legend>Product {{ index + 1 }}</legend>
+                  <div class="wizard__grid">
+                    <label class="field">
+                      <span class="field__label">Name</span>
+                      <input type="text" formControlName="name" placeholder="Product name" />
+                    </label>
+
+                    <label class="field">
+                      <span class="field__label">Price</span>
+                      <input type="number" formControlName="price" min="0" step="1" />
+                    </label>
+
+                    <label class="field field--full">
+                      <span class="field__label">Description</span>
+                      <textarea rows="3" formControlName="description" placeholder="Describe why this product matters."></textarea>
+                    </label>
+
+                    <label class="field field--full">
+                      <span class="field__label">Image URL</span>
+                      <input type="url" formControlName="imageUrl" placeholder="https://..." />
+                    </label>
+
+                    <label class="field"><span class="field__label">Category</span><input type="text" formControlName="category" placeholder="Apparel" /></label><label class="field"><span class="field__label">Subcategory</span><input type="text" formControlName="subCategory" placeholder="Outerwear" /></label><label class="field field--full"><span class="field__label">Gallery image URLs</span><textarea rows="2" formControlName="gallery" placeholder="Comma separated image URLs"></textarea></label><label class="field"><span class="field__label">Available sizes</span><input type="text" formControlName="sizes" placeholder="S, M, L" /></label><label class="field"><span class="field__label">Available colors</span><input type="text" formControlName="colors" placeholder="Black, Navy" /></label><label class="field field--full"><span class="field__label">Badge / Highlight</span>
+                      <input type="text" formControlName="highlight" placeholder="Limited Release" />
+                    </label>
+                  </div>
+
+                  <button type="button" class="product-card__remove" (click)="removeProduct(index)" [disabled]="productsArray.length === 1">
+                    Remove product
+                  </button>
+                </fieldset>
+              }
+            </div>
+            <button type="button" class="wizard__add" (click)="addProduct()">
+              + Add another product
+            </button>
+          </section>
+        }
+      }
+
+      <footer class="wizard__footer">
+        <button type="button" class="wizard__nav" (click)="previousStep()" [disabled]="!canGoBack">
+          Back
+        </button>
+
+        @if (!isLastStep) {
+          <button type="button" class="wizard__nav wizard__nav--primary" (click)="nextStep()">
+            Continue
+          </button>
+        } @else {
+          <button type="submit" class="wizard__nav wizard__nav--primary">
+            Generate website
+          </button>
+        }
+      </footer>
+    </form>
+  </div>
+</div>
+

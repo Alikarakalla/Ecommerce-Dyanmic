@@ -1,0 +1,30 @@
+@if (!hasSite()) {
+  <section class="home-placeholder">
+    <div class="home-placeholder__panel">
+      <h1>Let''s build your ecommerce launch page</h1>
+      <p>Use the guided wizard to feed in your brand details and instantly preview your store.</p>
+
+      @if (cartCount()) {
+        <a routerLink="/cart" class="home-placeholder__cta home-placeholder__cta--primary">
+          View cart ({{ cartCount() }})
+        </a>
+      }
+
+      @if (isAdmin()) {
+        <button type="button" (click)="startWizard()">Start the wizard</button>
+      } @else {
+        <p class="home-placeholder__hint">Only admins can customize the storefront.</p>
+        <a routerLink="/auth/login" class="home-placeholder__cta">Admin sign in</a>
+      }
+    </div>
+  </section>
+} @else if (site(); as siteData) {
+  <div class="home">
+    <app-site-navbar [site]="siteData"></app-site-navbar>
+    <app-site-hero [site]="siteData"></app-site-hero>
+    <app-products-grid [products]="filteredProducts()"></app-products-grid>
+    <app-contact-section [site]="siteData"></app-contact-section>
+    <app-site-footer [site]="siteData"></app-site-footer>
+  </div>
+}
+

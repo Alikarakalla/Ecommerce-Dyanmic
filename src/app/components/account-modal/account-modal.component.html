@@ -1,0 +1,105 @@
+<div class="account-modal" (click)="overlayClick($event)">
+  <div class="account-modal__dialog">
+    <header class="account-modal__header">
+      <div>
+        <h2>My account</h2>
+        <p>Manage your profile and revisit past purchases.</p>
+      </div>
+      <button type="button" class="account-modal__close" (click)="close()">Close</button>
+    </header>
+
+    <div class="account-modal__content">
+      <form class="account-modal__form" [formGroup]="form" (ngSubmit)="save()">
+        <h3>Profile</h3>
+        <label>
+          <span>Name</span>
+          <input type="text" formControlName="name" placeholder="Your name" />
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" formControlName="email" placeholder="you@example.com" />
+        </label>
+        <label>
+          <span>Phone</span>
+          <input type="tel" formControlName="phone" placeholder="Optional" />
+        </label>
+        <label>
+          <span>Address</span>
+          <input type="text" formControlName="address" placeholder="Street, number" />
+        </label>
+        <div class="account-modal__form-grid">
+          <label>
+            <span>City</span>
+            <input type="text" formControlName="city" placeholder="City" />
+          </label>
+          <label>
+            <span>Country</span>
+            <input type="text" formControlName="country" placeholder="Country" />
+          </label>
+        </div>
+
+        @if (error()) {
+          <p class="account-modal__alert account-modal__alert--error">{{ error() }}</p>
+        }
+        @if (message()) {
+          <p class="account-modal__alert">{{ message() }}</p>
+        }
+
+        <button type="submit" class="account-modal__submit" [disabled]="saving()">
+          {{ saving() ? 'Saving...' : 'Save changes' }}
+        </button>
+      </form>
+
+      <section class="account-modal__orders">
+        <div class="account-modal__orders-head">
+          <h3>Order history</h3>
+          <p>Reorder any previous purchase in one tap.</p>
+        </div>
+
+        @if (hasOrders()) {
+          <div class="account-modal__order-list">
+            @for (order of orders(); track trackOrder($index, order)) {
+              <article class="account-order">
+                <div class="account-order__header">
+                  <div>
+                    <h4>Order #{{ order.id.slice(-6).toUpperCase() }}</h4>
+                    <p>{{ order.placedAt | date: 'mediumDate' }} - {{ order.paymentMethod | uppercase }}</p>
+                  </div>
+                  <span class="account-order__total">${{ order.total | number: '1.2-2' }}</span>
+                </div>
+                <ul class="account-order__items">
+                  @for (item of order.items; track item.slug) {
+                    <li>
+                      <div>
+                        <span class="account-order__item-name">{{ item.name }}</span>
+                        <span class="account-order__item-meta">
+                          Qty {{ item.quantity }}
+                          @if (item.variant?.size) {
+                            <span>| Size {{ item.variant?.size }}</span>
+                          }
+                          @if (item.variant?.color) {
+                            <span>| Color {{ item.variant?.color }}</span>
+                          }
+                        </span>
+                      </div>
+                      <span>${{ item.unitPrice | number: '1.2-2' }}</span>
+                    </li>
+                  }
+                </ul>
+                <button type="button" class="account-order__reorder" (click)="reorder(order)">Reorder</button>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="account-modal__empty">
+            <h4>No orders yet</h4>
+            <p>You can place an order through checkout and it will appear here.</p>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>
+
+
+

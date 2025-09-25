@@ -1,0 +1,255 @@
+@if (!site()) {
+  <section class="checkout-placeholder">
+    <div class="checkout-placeholder__panel">
+      <h1>Cart is disabled</h1>
+      <p>The storefront is not configured yet. Ask an admin to run the setup wizard to enable checkout.</p>
+      <a routerLink="/auth/login" class="checkout-placeholder__cta">Admin sign in</a>
+    </div>
+  </section>
+} @else if (site(); as siteData) {
+  <div class="checkout-page">
+    <app-site-navbar [site]="siteData"></app-site-navbar>
+    <section class="checkout" id="cart">
+      <header class="checkout__hero" [style.--accent-color]="accentColor()">
+        <div class="checkout__hero-copy">
+          <p class="checkout__eyebrow">{{ siteData.storeName }}</p>
+          <h1>Complete your order</h1>
+          <p>
+            Review your bag, pick the payment method that works best for you, and we will handle the rest.
+          </p>
+          <div class="checkout__progress" role="status">
+            <div class="checkout__progress-bar">
+              <span class="checkout__progress-value" [style.width.%]="shippingProgress()"></span>
+            </div>
+            <p class="checkout__progress-text">
+              @if (qualifiesForFreeShipping()) {
+                You unlocked free shipping!
+              } @else {
+                Add ${{ shippingDelta() | number: '1.0-0' }} more to unlock free shipping (orders over ${{ freeShippingThreshold }}).
+              }
+            </p>
+          </div>
+        </div>
+        <div class="checkout__hero-stats">
+          <div>
+            <span>Items</span>
+            <strong>{{ cartCount() }}</strong>
+          </div>
+          <div>
+            <span>Favorites</span>
+            <strong>{{ favorites().length }}</strong>
+          </div>
+          <div>
+            <span>Order total</span>
+            <strong>${{ total() | number: '1.2-2' }}</strong>
+          </div>
+        </div>
+      </header>
+
+      <div class="checkout__grid">
+        <div class="checkout__main">
+          <div class="checkout__group-head">
+            <div>
+              <h2>Your bag</h2>
+              <p>Keep or update quantities before you place the order.</p>
+            </div>
+            @if (cartCount()) {
+              <span class="checkout__pill">{{ cartCount() }} {{ cartCount() === 1 ? 'item' : 'items' }}</span>
+            }
+          </div>
+
+          @if (cartCount() === 0) {
+            <div class="checkout__empty">
+              <h3>Your cart is empty</h3>
+              <p>Browse the catalog and add products to see them here.</p>
+              <div class="checkout__empty-actions">
+                <a routerLink="/" fragment="featured-products">Browse featured products</a>
+                <a routerLink="/favorites" class="checkout__empty-link">View saved items</a>
+              </div>
+            </div>
+          } @else {
+            <div class="checkout__list">
+              @for (item of items(); track item.product.slug) {
+                <article class="checkout-item">
+                  <div class="checkout-item__media">
+                    <img [src]="item.product.imageUrl" alt="{{ item.product.name }}" />
+                  </div>
+                  <div class="checkout-item__body">
+                    <div class="checkout-item__header">
+                      <div>
+                        <h3>{{ item.product.name }}</h3>
+                        <div class="checkout-item__meta">
+                          @if (item.product.category) {
+                            <span>{{ item.product.category }}</span>
+                          }
+                          @if (item.product.subCategory) {
+                            <span>{{ item.product.subCategory }}</span>
+                          }
+                          @if (item.product.highlight) {
+                            <span class="checkout-item__badge">{{ item.product.highlight }}</span>
+                          }
+                        </div>
+                      </div>
+                      <div class="checkout-item__totals">
+                        <span class="checkout-item__line">${{ item.lineTotal | number: '1.2-2' }}</span>
+                        <span class="checkout-item__unit">${{ item.unitPrice | number: '1.2-2' }} each</span>
+                      </div>
+                    </div>
+
+                    <p class="checkout-item__description">{{ item.product.description }}</p>
+
+                    <div class="checkout-item__chips">
+                      @if (item.variant?.size) {
+                        <span class="checkout-item__chip">Size {{ item.variant?.size }}</span>
+                      }
+                      @if (item.variant?.color) {
+                        <span class="checkout-item__chip">Color {{ item.variant?.color }}</span>
+                      }
+                    </div>
+
+                    <div class="checkout-item__footer">
+                      <div class="checkout-quantity">
+                        <button
+                          type="button"
+                          (click)="decrement(item.product.slug, item.quantity, item.variant)"
+                          aria-label="Decrease quantity"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          [value]="item.quantity"
+                          min="1"
+                          (input)="updateQuantity(item.product.slug, $any($event.target).valueAsNumber || 1, item.variant)"
+                        />
+                        <button
+                          type="button"
+                          (click)="increment(item.product.slug, item.quantity, item.variant)"
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div class="checkout-item__actions">
+                        <a [routerLink]="['/product', item.product.slug]">View details</a>
+                        <button type="button" (click)="remove(item.product.slug, item.variant)">Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+
+          @if (favorites().length) {
+            <section class="checkout__favorites">
+              <div class="checkout__group-head checkout__group-head--sub">
+                <div>
+                  <h2>Saved for later</h2>
+                  <p>Add favourites straight into your cart when you are ready.</p>
+                </div>
+                <a routerLink="/favorites" class="checkout__link-inline">Manage favourites</a>
+              </div>
+              <div class="checkout__favorite-grid">
+                @for (favorite of favorites(); track favorite.slug) {
+                  <article class="favorite-card">
+                    <img [src]="favorite.imageUrl" alt="{{ favorite.name }}" />
+                    <div class="favorite-card__body">
+                      <h3>{{ favorite.name }}</h3>
+                      <p class="favorite-card__price">${{ favorite.price | number: '1.0-0' }}</p>
+                    </div>
+                    <div class="favorite-card__actions">
+                      <button type="button" (click)="moveFavoriteToCart(favorite.slug)">Add to cart</button>
+                      <button type="button" class="favorite-card__remove" (click)="toggleFavorite(favorite.slug)">Remove</button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+          }
+        </div>
+
+        <aside class="checkout__sidebar">
+          <div class="checkout__summary">
+            <h2>Order summary</h2>
+            <div class="checkout__row">
+              <span>Subtotal</span>
+              <span>${{ subtotal() | number: '1.2-2' }}</span>
+            </div>
+            <div class="checkout__row">
+              <span>Shipping</span>
+              <span>${{ shipping() | number: '1.2-2' }}</span>
+            </div>
+            <div class="checkout__row checkout__row--total">
+              <span>Total</span>
+              <span>${{ total() | number: '1.2-2' }}</span>
+            </div>
+            <ul class="checkout__perks">
+              <li>Secure payment powered by 256-bit encryption</li>
+              <li>Free exchanges within 30 days of delivery</li>
+              <li>Support team available 7 days a week</li>
+            </ul>
+          </div>
+
+          <form class="checkout__form" [formGroup]="form" (ngSubmit)="checkout()">
+            <h3>Customer details</h3>
+            <label>
+              <span>Full name</span>
+              <input type="text" formControlName="name" placeholder="Your name" />
+            </label>
+            <label>
+              <span>Email</span>
+              <input type="email" formControlName="email" placeholder="you@example.com" />
+            </label>
+            <label>
+              <span>Shipping address</span>
+              <input type="text" formControlName="address" placeholder="123 Market Street" />
+            </label>
+            <div class="checkout__form-grid">
+              <label>
+                <span>City</span>
+                <input type="text" formControlName="city" placeholder="San Francisco" />
+              </label>
+              <label>
+                <span>Country / Region</span>
+                <input type="text" formControlName="country" placeholder="United States" />
+              </label>
+            </div>
+            <label>
+              <span>Order notes (optional)</span>
+              <textarea formControlName="notes" rows="3" placeholder="Share delivery preferences"></textarea>
+            </label>
+
+            <h3>Payment method</h3>
+            <div class="checkout__payments">
+              @for (option of paymentOptions; track option.value) {
+                <label class="checkout__payment">
+                  <input type="radio" formControlName="paymentMethod" [value]="option.value" />
+                  <div>
+                    <span>{{ option.label }}</span>
+                    <p>{{ option.description }}</p>
+                  </div>
+                </label>
+              }
+            </div>
+
+            @if (message()) {
+              <p class="checkout__message">{{ message() }}</p>
+            }
+
+            <button type="submit" class="checkout__submit" [disabled]="submitting()">
+              {{ submitting() ? 'Processing...' : 'Place order' }}
+            </button>
+            <div class="checkout__form-actions">
+              <button type="button" class="checkout__link" (click)="continueShopping()">Continue shopping</button>
+              <button type="button" class="checkout__link" (click)="clearCart()" [disabled]="cartCount() === 0">
+                Clear cart
+              </button>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </section>
+    <app-site-footer [site]="siteData"></app-site-footer>
+  </div>
+}

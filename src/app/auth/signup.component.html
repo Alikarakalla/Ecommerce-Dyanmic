@@ -1,0 +1,56 @@
+﻿<div class="auth-card">
+  <div>
+    <h1>Create your account</h1>
+    <p>Choose a role to get started. Admin access requires the invite code.</p>
+  </div>
+
+  @if (message()) {
+    <div class="auth-message">{{ message() }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <label class="auth-field">
+      <span>Full name</span>
+      <input type="text" formControlName="name" placeholder="Your name" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <span class="auth-error">Enter your name.</span>
+      }
+    </label>
+
+    <label class="auth-field">
+      <span>Email</span>
+      <input type="email" formControlName="email" placeholder="you@example.com" />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="auth-error">Enter a valid email.</span>
+      }
+    </label>
+
+    <label class="auth-field">
+      <span>Password</span>
+      <input type="password" formControlName="password" placeholder="••••••" />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="auth-error">Password must be at least 6 characters.</span>
+      }
+    </label>
+
+    <label class="auth-field">
+      <span>Role</span>
+      <select formControlName="role">
+        <option value="member">Member (view store)</option>
+        <option value="admin">Admin (manage storefront)</option>
+      </select>
+    </label>
+
+    @if (form.controls.role.value === 'admin') {
+      <label class="auth-field">
+        <span>Admin invite code</span>
+        <input type="text" formControlName="adminCode" placeholder="ADMIN-ACCESS-2024" />
+      </label>
+    }
+
+    <div class="auth-actions">
+      <button class="auth-primary" type="submit">Create account</button>
+      <a routerLink="/auth/login" class="auth-secondary">Already have an account? Sign in</a>
+    </div>
+  </form>
+</div>

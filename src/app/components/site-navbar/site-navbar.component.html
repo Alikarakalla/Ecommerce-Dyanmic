@@ -1,0 +1,121 @@
+<nav class="site-nav" [style.--accent-color]="site.accentColor">
+  <a class="site-nav__brand" routerLink="/">
+    <img class="site-nav__logo" [src]="site.logoUrl" alt="{{ site.storeName }} logo" />
+    <div>
+      <span class="site-nav__name">{{ site.storeName }}</span>
+      <span class="site-nav__tagline">{{ site.tagline }}</span>
+    </div>
+  </a>
+
+  <div class="site-nav__search">
+    <div class="site-nav__search-field">
+      <span class="site-nav__search-icon" aria-hidden="true">
+        <svg viewBox="0 0 20 20">
+          <path
+            d="M13.5 12.1 17 15.5l-1.5 1.5-3.4-3.4a6 6 0 1 1 1.4-1.5zM8.5 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"
+          />
+        </svg>
+      </span>
+      <input
+        type="search"
+        placeholder="Search products, collections, categories..."
+        [value]="searchQuery()"
+        (focus)="onSearchFocus()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+      @if (searchQuery()) {
+        <button
+          class="site-nav__search-clear"
+          type="button"
+          (click)="clearSearch()"
+          aria-label="Clear search"
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M5 5l10 10m0-10L5 15" />
+          </svg>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="site-nav__actions">
+    <a routerLink="/cart" class="site-nav__pill">
+      <span>Cart</span>
+      @if (cartCount()) {
+        <span class="site-nav__badge">{{ cartCount() }}</span>
+      }
+    </a>
+
+    <a routerLink="/favorites" class="site-nav__pill site-nav__pill--ghost">
+      <span>Favorites</span>
+      @if (favoriteCount()) {
+        <span class="site-nav__badge">{{ favoriteCount() }}</span>
+      }
+    </a>
+
+    @if (isAdmin()) {
+      <button type="button" class="site-nav__cta" (click)="customize()">Customize</button>
+    } @else {
+      <button type="button" class="site-nav__cta site-nav__cta--secondary" (click)="redirectToLogin()">Admin login</button>
+    }
+
+    @if (isAuthenticated()) {
+      <div class="site-nav__profile" [class.site-nav__profile--open]="profileMenuOpen()">
+        <button type="button" class="site-nav__profile-avatar" (click)="toggleProfileMenu()">
+          {{ profileInitial }}
+        </button>
+        @if (profileMenuOpen()) {
+          <div class="site-nav__profile-menu">
+            <button type="button" (click)="openAccountModal()">My account</button>
+            <button type="button" (click)="goToFavorites()">My favourites</button>
+            <button type="button" (click)="logout()">Logout</button>
+          </div>
+        }
+      </div>
+    } @else {
+      <a routerLink="/auth/login" class="site-nav__sign-in">Sign in</a>
+    }
+  </div>
+</nav>
+
+@if (categories().length) {
+  <div class="site-nav__categories">
+    @for (group of categories(); track trackByCategory($index, group)) {
+      <div class="site-nav__category" [class.site-nav__category--active]="activeCategory()?.category === group.category">
+        <button type="button" (click)="selectCategory(group.category)">{{ group.category }}</button>
+        @if (group.subCategories.length) {
+          <div class="site-nav__subcategories">
+            @for (sub of group.subCategories; track trackBySubCategory($index, sub)) {
+              <button type="button" (click)="selectCategory(group.category, sub)">{{ sub }}</button>
+            }
+          </div>
+        }
+      </div>
+    }
+    <button type="button" class="site-nav__clear" (click)="selectCategory('All Products')">All products</button>
+  </div>
+}
+
+@if (searchOpen() && searchResults().length) {
+  <div class="site-nav__search-panel">
+    @for (product of searchResults(); track product.slug) {
+      <article class="search-card">
+        <img [src]="product.imageUrl" alt="{{ product.name }}" />
+        <div>
+          <h4>{{ product.name }}</h4>
+          <p>${{ product.price | number: '1.0-0' }}</p>
+          <p class="search-card__meta">{{ product.category || 'Catalog' }} - {{ product.subCategory || 'All' }}</p>
+        </div>
+        <div class="search-card__actions">
+          <button type="button" (click)="quickAddToCart(product)">Add</button>
+          <button type="button" (click)="goToProduct(product.slug)">View</button>
+        </div>
+      </article>
+    }
+  </div>
+} @else if (searchOpen() && !searchResults().length && searchQuery()) {
+  <div class="site-nav__search-panel site-nav__search-panel--empty">
+    <p>No matches yet. Try another keyword.</p>
+  </div>
+}
+

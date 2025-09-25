@@ -1,0 +1,15 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f5f6f8;
+  color: #111827;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+:host ::ng-deep a {
+  color: inherit;
+}
+
+router-outlet {
+  display: block;
+}
