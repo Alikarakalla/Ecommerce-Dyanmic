@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AdminDashboardComponent } from './admin/admin-dashboard.component';
 import { LoginComponent } from './auth/login.component';
 import { SignupComponent } from './auth/signup.component';
 import { CheckoutComponent } from './cart/checkout.component';
@@ -13,5 +14,6 @@ export const routes: Routes = [
   { path: 'favorites', component: FavoritesComponent },
   { path: 'auth/login', component: LoginComponent },
   { path: 'auth/signup', component: SignupComponent },
+  { path: 'admin', component: AdminDashboardComponent },
   { path: '**', redirectTo: '' }
 ];
